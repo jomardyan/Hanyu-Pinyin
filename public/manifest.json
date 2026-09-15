@@ -3,13 +3,25 @@
   "name": "Hanyu Pinyin Reader",
   "version": "1.0.0",
   "description": "Adds local, phrase-aware Hanyu Pinyin pronunciation guides to Chinese text on webpages.",
+  "icons": {
+    "16": "assets/icons/icon16.png",
+    "32": "assets/icons/icon32.png",
+    "48": "assets/icons/icon48.png",
+    "128": "assets/icons/icon128.png"
+  },
   "permissions": ["storage", "contextMenus", "activeTab"],
   "background": {
     "service_worker": "background.js"
   },
   "action": {
     "default_title": "Hanyu Pinyin Reader",
-    "default_popup": "popup.html"
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "assets/icons/icon16.png",
+      "32": "assets/icons/icon32.png",
+      "48": "assets/icons/icon48.png",
+      "128": "assets/icons/icon128.png"
+    }
   },
   "options_page": "options.html",
   "content_scripts": [
