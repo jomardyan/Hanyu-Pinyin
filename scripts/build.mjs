@@ -14,7 +14,7 @@ async function copyStatic() {
   await cp(resolve(root, 'src/options/options.html'), resolve(dist, 'options.html'));
   await cp(resolve(root, 'src/options/options.css'), resolve(dist, 'options.css'));
   await mkdir(resolve(dist, 'assets'), { recursive: true });
-  await cp(resolve(root, 'assets/icon.svg'), resolve(dist, 'assets/icon.svg'));
+  await cp(resolve(root, 'assets/icons'), resolve(dist, 'assets/icons'), { recursive: true });
 }
 
 const config = {
@@ -29,7 +29,7 @@ const config = {
   format: 'iife',
   platform: 'browser',
   target: ['chrome120', 'edge120'],
-  sourcemap: true,
+  sourcemap: watch,
   minify: !watch,
   logLevel: 'info'
 };
