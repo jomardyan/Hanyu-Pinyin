@@ -48,8 +48,12 @@ async function processQueue(): Promise<void> {
 
   while (queue.length && budget > 0) {
     const root = queue.shift();
-    if (!root || !root.isConnected && root !== document) continue;
-    const nodes = collectTextNodes(root, settings, budget);
+    if (!root || (!root.isConnected && root !== document)) continue;
+
+    const requestedLimit = budget;
+    const nodes = collectTextNodes(root, settings, requestedLimit);
+    const mayHaveMore = nodes.length === requestedLimit;
+
     for (const node of nodes) {
       try {
         if (annotateTextNode(node, settings)) {
@@ -63,7 +67,19 @@ async function processQueue(): Promise<void> {
       budget -= 1;
       if (budget <= 0) break;
     }
-    for (const shadowRoot of openShadowRoots(root)) queue.push(shadowRoot);
+
+    // collectTextNodes intentionally stops at the requested limit. If the
+    // limit was reached, the root may still contain eligible Chinese text.
+    // Requeue it so large pages are processed progressively instead of only
+    // annotating the first batch near the top of the document.
+    if (mayHaveMore && (root.isConnected || root === document)) {
+      queue.push(root);
+    } else {
+      // Only discover shadow roots after this root has been fully drained.
+      // This prevents repeatedly enqueueing the same shadow roots on every
+      // continuation batch of a large document.
+      for (const shadowRoot of openShadowRoots(root)) queue.push(shadowRoot);
+    }
   }
 
   stats.lastProcessingMs = Math.round((performance.now() - started) * 10) / 10;
