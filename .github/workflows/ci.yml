@@ -26,28 +26,11 @@ jobs:
 
       - run: npm install
 
-      - run: npm run check
-
-      - name: Package Chrome Web Store upload
-        shell: bash
-        run: |
-          VERSION=$(node -p "require('./package.json').version")
-          cd dist
-          zip -r "../hanyu-pinyin-reader-${VERSION}-chrome-web-store.zip" .
-          cd ..
-
-      - name: Package Chrome Web Store listing assets
-        shell: bash
-        run: |
-          VERSION=$(node -p "require('./package.json').version")
-          cd chrome-store
-          zip -r "../hanyu-pinyin-reader-${VERSION}-store-assets.zip" .
-          cd ..
+      - name: Validate and package Chrome Web Store release
+        run: npm run store:release
 
       - uses: actions/upload-artifact@v4
         with:
           name: chrome-web-store-submission
-          path: |
-            hanyu-pinyin-reader-*-chrome-web-store.zip
-            hanyu-pinyin-reader-*-store-assets.zip
+          path: release/*.zip
           if-no-files-found: error
