@@ -9,10 +9,15 @@
     "store:generate": "node scripts/store-assets/generate.mjs",
     "build": "npm run store:generate && node scripts/build.mjs",
     "dev": "npm run store:generate && node scripts/build.mjs --watch",
+    "run:chrome": "npm run build && node scripts/run-extension.mjs --browser chrome --dist dist --profile .browser-profile/chrome",
+    "run:edge": "npm run build && node scripts/run-extension.mjs --browser edge --dist dist --profile .browser-profile/edge",
+    "fixture": "node scripts/serve-fixture.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
     "store:validate": "node scripts/validate-store-assets.mjs",
     "check": "tsc --noEmit && npm test && npm run build && npm run store:validate",
+    "package": "npm run build && npm run store:validate && node scripts/package-release.mjs",
     "store:release": "npm run check && node scripts/package-release.mjs"
   },
   "dependencies": {
