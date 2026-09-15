@@ -27,7 +27,7 @@ jobs:
       - run: npm install
 
       - name: Validate and package Chrome Web Store release
-        run: npm run store:release
+        run: make release
 
       - uses: actions/upload-artifact@v4
         with:
