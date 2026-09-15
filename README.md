@@ -29,7 +29,7 @@ npm install
 npm run check
 ```
 
-`npm run check` performs TypeScript validation, automated tests, and a production build.
+`npm run check` performs TypeScript validation, automated tests, a production build, and Chrome Web Store asset validation.
 
 For development builds
 
@@ -109,6 +109,17 @@ Closed Shadow DOM cannot be inspected by extensions and is intentionally left un
 
 This repository itself is released under the Unlicense, as declared in `LICENSE`.
 
+## Chrome Web Store release files
+
+The `chrome-store` directory contains the store listing copy, privacy disclosures, reviewer notes, submission checklist, store icon, five screenshots, the required small promotional tile, and an optional marquee asset.
+
+The production extension manifest includes PNG icons at 16, 32, 48, and 128 pixels. Store-only marketing images are not copied into the runtime extension.
+
+GitHub Actions validates the project, creates the production extension ZIP, and creates a second ZIP containing the Chrome Web Store listing assets. The workflow can also be started manually.
+
 ## Release artifact
 
-The CI workflow runs type checking, tests, and the production build. It also produces a ZIP artifact containing the ready-to-load contents of `dist`.
+The CI workflow produces two files for version 1.0.0.
+
+- `hanyu-pinyin-reader-1.0.0-chrome-web-store.zip` is the file to upload as the extension package.
+- `hanyu-pinyin-reader-1.0.0-store-assets.zip` contains listing graphics and submission documentation.
