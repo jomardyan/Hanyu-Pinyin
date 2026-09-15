@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Hanyu Pinyin Reader</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <main>
+    <header><div><h1>Hanyu Pinyin</h1><p id="site">Current site</p></div><label class="switch"><input id="enabled" type="checkbox"><span></span></label></header>
+    <div id="status" class="status">Checking page status</div>
+    <label>Annotation mode<select id="annotationMode"><option value="above">Above Chinese</option><option value="hover">Show on hover</option><option value="after">After Chinese</option><option value="hidden">Hidden</option></select></label>
+    <label>Granularity<select id="granularity"><option value="word">Words and phrases</option><option value="character">Characters</option></select></label>
+    <label>Tones<select id="toneStyle"><option value="marks">Tone marks</option><option value="numbers">Tone numbers</option><option value="none">No tones</option></select></label>
+    <label>This website<select id="domainRule"><option value="inherit">Use global setting</option><option value="always">Always enable</option><option value="never">Never enable</option></select></label>
+    <details><summary>Appearance</summary>
+      <label>Pinyin size<input id="fontScale" type="range" min="0.4" max="0.9" step="0.05"></label>
+      <label>Opacity<input id="opacity" type="range" min="0.35" max="1" step="0.05"></label>
+      <label>Spacing<input id="spacing" type="range" min="0" max="0.3" step="0.01"></label>
+      <label>Color<input id="color" type="color"></label>
+    </details>
+    <footer><button id="defaults" class="secondary">Defaults</button><button id="options" class="secondary">Advanced settings</button></footer>
+  </main>
+  <script src="popup.js"></script>
+</body>
+</html>
