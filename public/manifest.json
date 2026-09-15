@@ -1,0 +1,40 @@
+{
+  "manifest_version": 3,
+  "name": "Hanyu Pinyin Reader",
+  "version": "1.0.0",
+  "description": "Adds local, phrase-aware Hanyu Pinyin pronunciation guides to Chinese text on webpages.",
+  "permissions": ["storage", "contextMenus", "activeTab"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Hanyu Pinyin Reader",
+    "default_popup": "popup.html"
+  },
+  "options_page": "options.html",
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ],
+  "commands": {
+    "toggle-pinyin": {
+      "suggested_key": {"default": "Alt+Shift+P"},
+      "description": "Toggle Pinyin annotations"
+    },
+    "toggle-hover": {
+      "suggested_key": {"default": "Alt+Shift+H"},
+      "description": "Toggle hover-only Pinyin mode"
+    },
+    "annotate-selection": {
+      "suggested_key": {"default": "Alt+Shift+A"},
+      "description": "Annotate selected Chinese text"
+    }
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  }
+}
