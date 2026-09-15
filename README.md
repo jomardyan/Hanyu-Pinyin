@@ -111,15 +111,26 @@ This repository itself is released under the Unlicense, as declared in `LICENSE`
 
 ## Chrome Web Store release files
 
-The `chrome-store` directory contains the store listing copy, privacy disclosures, reviewer notes, submission checklist, store icon, five screenshots, the required small promotional tile, and an optional marquee asset.
+The `chrome-store` directory contains the store listing copy, privacy disclosures, reviewer notes, submission checklist, store icon, five screenshots, the required small promotional tile, and an optional marquee asset. The graphics are generated deterministically during the release build.
 
 The production extension manifest includes PNG icons at 16, 32, 48, and 128 pixels. Store-only marketing images are not copied into the runtime extension.
 
-GitHub Actions validates the project, creates the production extension ZIP, and creates a second ZIP containing the Chrome Web Store listing assets. The workflow can also be started manually.
+Create the complete release locally with
 
-## Release artifact
+```bash
+npm install
+npm run store:release
+```
 
-The CI workflow produces two files for version 1.0.0.
+The command validates TypeScript and tests, generates all store graphics, builds the production extension, validates the store assets, and writes the final ZIP files into `release`.
 
-- `hanyu-pinyin-reader-1.0.0-chrome-web-store.zip` is the file to upload as the extension package.
-- `hanyu-pinyin-reader-1.0.0-store-assets.zip` contains listing graphics and submission documentation.
+GitHub Actions invokes the same `store:release` command and uploads the resulting ZIP files when Actions runners are available.
+
+## Release artifacts
+
+The release command produces two files for version 1.0.0.
+
+- `release/hanyu-pinyin-reader-1.0.0-chrome-web-store.zip` is the package to upload on the Chrome Web Store Package tab. Its `manifest.json` is at the root of the ZIP.
+- `release/hanyu-pinyin-reader-1.0.0-store-assets.zip` contains listing graphics, listing text, reviewer notes, the privacy policy, the submission checklist, and public privacy and support page templates.
+
+Before public submission, publish the privacy policy from `docs/privacy.html` at a publicly accessible HTTPS URL and enter that URL in the Chrome Web Store Privacy practices section.
