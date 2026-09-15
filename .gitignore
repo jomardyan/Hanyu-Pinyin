@@ -3,3 +3,6 @@ dist/
 *.zip
 .DS_Store
 coverage/
+assets/icons/*.png
+chrome-store/assets/*.png
+chrome-store/assets/screenshots/*.png
