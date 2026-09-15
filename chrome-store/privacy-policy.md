@@ -1,56 +1,41 @@
 # Privacy Policy for Hanyu Pinyin Reader
 
-Last updated 15 September 2026
+Last updated 15 September 2026 for version 1.1.0
 
-Hanyu Pinyin Reader is a browser extension that adds Hanyu Pinyin pronunciation annotations to Chinese text on webpages.
+Hanyu Pinyin Reader adds pronunciation guides to Chinese webpage text. Conversion takes place in the browser. The extension does not send webpage or selected text to a pronunciation service, the developer, or an analytics provider.
 
-## Data processed by the extension
+## Information used
 
-The extension reads visible webpage text locally in the browser to identify Chinese characters and generate Pinyin pronunciation annotations.
+The extension reads eligible webpage text to generate Pinyin. It uses the current hostname to apply website preferences. It stores annotation settings, exact-host rules, excluded selectors, and performance preferences. Temporary conversion results remain in memory and are bounded.
 
-The extension also stores user preferences such as annotation mode, tone format, appearance settings, performance settings, and per-domain rules.
+## Preference storage and migration
 
-## Data collection and transmission
+Version 1.1.0 writes new preferences to chrome.storage.local in the browser profile. It does not write new preferences to browser sync storage. Reset clears current settings; removing extension data or uninstalling removes browser-managed local data subject to the browser's behavior.
 
-Hanyu Pinyin Reader does not send webpage text, selected text, browsing history, or user preferences to the developer or to third parties.
+Earlier versions used chrome.storage.sync. On first use, version 1.1.0 reads that legacy record and copies preferences to the local store. It leaves the old sync record untouched for rollback. Existing synced copies may therefore remain with the browser provider. Resetting the new local settings does not delete those legacy synced copies. Manage old synced extension data through the browser's data controls when needed.
 
-Chinese-to-Pinyin conversion runs locally inside the browser. The extension does not use a remote pronunciation service.
+An explicit settings export downloads a JSON file to the user's device. It includes configured domains and selectors. The user controls any subsequent sharing. Import reads a file selected by the user and validates its structure before replacing settings.
 
-The extension does not include advertising, analytics, tracking, telemetry, account registration, or behavioral profiling.
+## Clipboard and page access
 
-## Local storage
-
-Settings and per-domain rules are stored locally using the Chrome extension storage API. This information remains in the user's browser profile unless the user resets the extension settings, clears extension data, removes the extension, or Chrome otherwise removes that local data.
+Clipboard writes occur only through a user-requested copy action. Automatic content scripts access ordinary HTTP and HTTPS documents, including permitted frames, to add Pinyin. They skip form fields, editable regions, code, and other excluded content. This requires page access even though no webpage text is sent to a server.
 
 ## Permissions
 
-The extension uses browser permissions only for its user-facing functionality.
+Storage saves preferences. Context menus expose selection actions. Active tab access supports user-initiated page controls. The extension does not request browsing history or collect a visited-page history.
 
-- Storage saves extension preferences and per-domain rules.
-- Context menus provide Pinyin actions for user-selected text.
-- Active tab access lets the popup and keyboard commands communicate with the active page after user interaction.
-- Access to normal HTTP and HTTPS webpages is required to detect Chinese text and display Pinyin annotations.
+## No advertising or telemetry
+
+The extension has no account registration, advertising, analytics, tracking, telemetry, or data-sale functionality. It does not knowingly collect personal information from children or any other user for the developer. Browser-managed services and previously synced records are separate from extension-operated transmission.
 
 ## Third-party software
 
-The extension bundles the open-source `pinyin-pro` library and dictionary data for local pronunciation conversion. The extension does not rely on those projects as remote services.
+Production builds bundle pinyin-pro and dictionary data locally, with their license notices. No remote JavaScript or remote dictionary service is used. Any separately supplied offline preview is labelled as a test build and uses its documented local adapter.
 
-## Data sharing and sale
+## Support
 
-The extension does not sell, rent, share, or transfer user data to third parties.
+Use the support contact published with the extension. Any information the user deliberately sends in a support request is outside automatic extension processing. Do not send private webpage text or personal information that is not necessary to describe the issue.
 
-## Children
+## Updates
 
-The extension does not knowingly collect personal information from children or from any other user.
-
-## Security
-
-Because pronunciation conversion is performed locally, webpage text is not transmitted to an external conversion service. The extension does not execute remote JavaScript.
-
-## Changes to this policy
-
-If extension behavior changes in a way that affects data handling, this policy will be updated before the corresponding extension version is published.
-
-## Contact
-
-For privacy or support questions, contact the developer using the support contact or support URL displayed on the Hanyu Pinyin Reader Chrome Web Store listing.
+This policy should be reviewed before publishing changes to data handling. The publisher must host this page at a public HTTPS address and supply a working support contact before store submission.

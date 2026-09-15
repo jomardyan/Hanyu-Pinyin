@@ -1,15 +1,19 @@
 {
   "manifest_version": 3,
   "name": "Hanyu Pinyin Reader",
-  "version": "1.0.0",
-  "description": "Adds local, phrase-aware Hanyu Pinyin pronunciation guides to Chinese text on webpages.",
+  "version": "1.1.0",
+  "description": "Read Chinese webpages with local, phrase-aware Pinyin. Customize tones, appearance, selection actions, and site preferences.",
   "icons": {
     "16": "assets/icons/icon16.png",
     "32": "assets/icons/icon32.png",
     "48": "assets/icons/icon48.png",
     "128": "assets/icons/icon128.png"
   },
-  "permissions": ["storage", "contextMenus", "activeTab"],
+  "permissions": [
+    "storage",
+    "contextMenus",
+    "activeTab"
+  ],
   "background": {
     "service_worker": "background.js"
   },
@@ -26,27 +30,40 @@
   "options_page": "options.html",
   "content_scripts": [
     {
-      "matches": ["http://*/*", "https://*/*"],
-      "js": ["content.js"],
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ],
+      "js": [
+        "content.js"
+      ],
       "run_at": "document_idle",
-      "all_frames": false
+      "all_frames": true,
+      "match_about_blank": true
     }
   ],
   "commands": {
     "toggle-pinyin": {
-      "suggested_key": {"default": "Alt+Shift+P"},
+      "suggested_key": {
+        "default": "Alt+Shift+P"
+      },
       "description": "Toggle Pinyin annotations"
     },
     "toggle-hover": {
-      "suggested_key": {"default": "Alt+Shift+H"},
+      "suggested_key": {
+        "default": "Alt+Shift+H"
+      },
       "description": "Toggle hover-only Pinyin mode"
     },
     "annotate-selection": {
-      "suggested_key": {"default": "Alt+Shift+A"},
+      "suggested_key": {
+        "default": "Alt+Shift+A"
+      },
       "description": "Annotate selected Chinese text"
     }
   },
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'"
-  }
+  },
+  "minimum_chrome_version": "120"
 }

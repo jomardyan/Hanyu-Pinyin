@@ -1,26 +1,19 @@
-import { DEFAULT_SETTINGS, mergeSettings, type Settings } from './settings';
-
-const KEY = 'settings';
-
-export async function loadSettings(): Promise<Settings> {
-  const result = await chrome.storage.sync.get(KEY);
-  return mergeSettings(result[KEY] as Partial<Settings> | undefined);
+import { mergeSettings, type Settings, type DomainRule } from './settings';
+export const SETTINGS_KEY = 'hp-settings-v2';
+/** Local storage is the source of truth. The worker serializes writes from all extension pages. */
+async function request(type: string, payload: Record<string, unknown> = {}): Promise<Settings> {
+  const reply = await chrome.runtime.sendMessage({ type, ...payload });
+  if (!reply?.ok) throw new Error(reply?.error || 'Could not save extension settings');
+  return mergeSettings(reply.settings);
 }
-
-export async function saveSettings(settings: Settings): Promise<void> {
-  await chrome.storage.sync.set({ [KEY]: settings });
-}
-
-export async function resetSettings(): Promise<Settings> {
-  const value = structuredClone(DEFAULT_SETTINGS);
-  await saveSettings(value);
-  return value;
-}
-
+export const loadSettings = () => request('hp-settings-get');
+export const patchSettings = (patch: Partial<Settings>) => request('hp-settings-patch', { patch });
+export const saveSettings = (settings: Settings) => request('hp-settings-replace', { settings });
+export const resetSettings = () => request('hp-settings-reset');
+export const setDomainRule = (host: string, rule: DomainRule) => request('hp-domain-set', { host, rule });
 export function subscribeSettings(listener: (settings: Settings) => void): () => void {
-  const callback: Parameters<typeof chrome.storage.onChanged.addListener>[0] = (changes, area) => {
-    if (area !== 'sync' || !changes[KEY]) return;
-    listener(mergeSettings(changes[KEY].newValue as Partial<Settings> | undefined));
+  const callback = (changes: Record<string, chrome.storage.StorageChange>, area: string) => {
+    if (area === 'local' && changes[SETTINGS_KEY]) listener(mergeSettings(changes[SETTINGS_KEY]!.newValue));
   };
   chrome.storage.onChanged.addListener(callback);
   return () => chrome.storage.onChanged.removeListener(callback);

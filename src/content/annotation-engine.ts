@@ -1,94 +1,74 @@
-import { HAN_RUN_RE, pronounce } from '../pinyin/pinyin-engine';
+import { inlineContext } from './text-context';
+import { pronounce } from '../pinyin/pinyin-engine';
+import { isProcessableTextNode, OWNED } from './dom-scanner';
 import type { Settings } from '../shared/settings';
-
-export interface AnnotationStats {
-  processedSegments: number;
-  processedNodes: number;
-  skippedNodes: number;
-  errors: number;
-}
-
-function ruby(token: { han: string; pinyin: string }, settings: Settings): HTMLElement {
-  const el = document.createElement('ruby');
-  el.className = 'hp-ruby';
-  const base = document.createTextNode(token.han);
-  const rt = document.createElement('rt');
-  rt.textContent = token.pinyin;
-  rt.setAttribute('aria-hidden', 'true');
-  el.append(base, rt);
-  return el;
-}
-
-function annotateHanRun(run: string, settings: Settings): DocumentFragment {
-  const fragment = document.createDocumentFragment();
-  const tokens = pronounce(run, settings.toneStyle, settings.granularity);
-
-  if (settings.annotationMode === 'after') {
-    fragment.append(document.createTextNode(run));
-    const p = document.createElement('span');
-    p.className = 'hp-after';
-    p.setAttribute('aria-hidden', 'true');
-    p.textContent = ` (${tokens.map(token => token.pinyin).join(' ')})`;
-    fragment.append(p);
-    return fragment;
-  }
-
-  for (const token of tokens) fragment.append(ruby(token, settings));
-  return fragment;
-}
-
+const originals = new WeakMap<Element, { node: Text; text: string }>();
+export interface AnnotationStats { processedSegments: number; processedNodes: number; skippedNodes: number; errors: number }
 export function annotateTextNode(node: Text, settings: Settings): HTMLElement | null {
-  const text = node.nodeValue ?? '';
-  if (!text.trim()) return null;
-  const wrapper = document.createElement('span');
-  wrapper.dataset.hpRoot = '1';
-  wrapper.dataset.hpOriginal = text;
-
-  let cursor = 0;
-  for (const match of text.matchAll(HAN_RUN_RE)) {
-    const index = match.index ?? 0;
-    if (index > cursor) wrapper.append(document.createTextNode(text.slice(cursor, index)));
-    wrapper.append(annotateHanRun(match[0], settings));
-    cursor = index + match[0].length;
+  if (settings.annotationMode === 'hidden' || !isProcessableTextNode(node, settings)) return null;
+  const doc = node.ownerDocument, wrapper = doc.createElement('span');
+  wrapper.dataset.hpRoot = '2';
+  let count = 0;
+  for (const token of pronounce(node.data, settings.toneStyle, settings.granularity, inlineContext(node))) {
+    if (!token.pinyin) { wrapper.append(doc.createTextNode(token.han)); continue; }
+    count++;
+    if (settings.annotationMode === 'after') {
+      wrapper.append(doc.createTextNode(token.han));
+      const after = doc.createElement('span');
+      after.dataset.hpRt = '1'; after.className = 'hp-after'; after.setAttribute('aria-hidden', 'true');
+      after.textContent = ` (${token.pinyin})`; wrapper.append(after);
+    } else {
+      const ruby = doc.createElement('ruby'); ruby.dataset.hpRuby = '1'; ruby.className = 'hp-ruby';
+      const rt = doc.createElement('rt'); rt.dataset.hpRt = '1'; rt.textContent = token.pinyin;
+      rt.setAttribute('aria-hidden', 'true');
+      ruby.append(doc.createTextNode(token.han), rt); wrapper.append(ruby);
+    }
   }
-  if (cursor < text.length) wrapper.append(document.createTextNode(text.slice(cursor)));
+  if (!count) return null;
+  originals.set(wrapper, { node, text: node.data });
   node.replaceWith(wrapper);
   return wrapper;
 }
-
-export function restoreWrapper(wrapper: Element): void {
-  const original = (wrapper as HTMLElement).dataset.hpOriginal;
-  if (original === undefined) return;
-  wrapper.replaceWith(document.createTextNode(original));
+export function baseText(root: ParentNode): string {
+  const copy = (root as Node).cloneNode(true) as ParentNode;
+  copy.querySelectorAll('[data-hp-rt],rt,rp').forEach(el => el.remove());
+  return (copy as Node).textContent || '';
 }
-
-export function restoreAll(root: ParentNode = document): void {
-  for (const wrapper of Array.from(root.querySelectorAll('[data-hp-root]'))) restoreWrapper(wrapper);
+export function restoreWrapper(wrapper: Element): Node[] {
+  const state = originals.get(wrapper);
+  if (!state) return []; // Never unwrap page-created lookalikes.
+  const live = baseText(wrapper);
+  // Preserve the original Text instance when its content has not been edited by the page.
+  const cleanShape = [...wrapper.querySelectorAll('*')].every(el => el.matches('[data-hp-ruby],[data-hp-rt]'));
+  if (state && cleanShape) {
+    if (live !== state.text) state.node.data = live;
+    wrapper.replaceWith(state.node); originals.delete(wrapper); return [state.node];
+  }
+  // A framework may have edited or inserted nodes. Preserve those current nodes, not a stale snapshot.
+  wrapper.querySelectorAll('[data-hp-rt]').forEach(el => el.remove());
+  wrapper.querySelectorAll('[data-hp-ruby]').forEach(el => el.replaceWith(...el.childNodes));
+  const nodes = [...wrapper.childNodes]; wrapper.replaceWith(...nodes); originals.delete(wrapper); return nodes;
 }
-
-export function installAnnotationStyles(settings: Settings): HTMLStyleElement {
-  let style = document.querySelector<HTMLStyleElement>('style[data-hp-style]');
+export function restoreAll(root: ParentNode = document): Node[] {
+  const out: Node[] = [];
+  if (root instanceof Element && root.matches(OWNED)) out.push(...restoreWrapper(root));
+  for (const wrapper of root.querySelectorAll(OWNED)) out.push(...restoreWrapper(wrapper));
+  return out;
+}
+export function installAnnotationStyles(settings: Settings, root: Document | ShadowRoot = document): HTMLStyleElement {
+  let style = root.querySelector<HTMLStyleElement>('style[data-hp-style]');
   if (!style) {
-    style = document.createElement('style');
-    style.dataset.hpStyle = '1';
-    (document.head || document.documentElement).append(style);
+    style = document.createElement('style'); style.dataset.hpStyle = '1';
+    (root instanceof Document ? root.head || root.documentElement : root).append(style);
   }
   style.textContent = `
-    [data-hp-root] { display: inline; }
-    .hp-ruby { ruby-position: over; ruby-align: center; }
-    .hp-ruby rt, .hp-after {
-      font-size: ${settings.fontScale}em;
-      opacity: ${settings.opacity};
-      color: ${settings.color};
-      letter-spacing: ${settings.spacing}em;
-      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-      font-weight: 400;
-      line-height: 1;
-      user-select: none;
-    }
-    ${settings.annotationMode === 'hover' ? '.hp-ruby rt { opacity: 0; } .hp-ruby:hover rt { opacity: ' + settings.opacity + '; }' : ''}
-    ${settings.annotationMode === 'hidden' ? '.hp-ruby rt, .hp-after { display: none !important; }' : ''}
-    .hp-selection-button { position: fixed; z-index: 2147483647; border: 0; border-radius: 999px; padding: 6px 10px; background: #111827; color: white; font: 12px/1.2 system-ui; box-shadow: 0 4px 16px rgba(0,0,0,.2); cursor: pointer; }
+    ${OWNED} { display: inline !important; font: inherit; }
+    ${OWNED} ruby[data-hp-ruby] { display: ruby !important; ruby-position: over !important; ruby-align: center; font: inherit; text-indent: 0; }
+    ${OWNED} [data-hp-rt] { font: 400 ${settings.fontScale}em/1 system-ui,-apple-system,"Segoe UI",sans-serif !important;
+      opacity: ${settings.opacity}; color: ${settings.color} !important; letter-spacing: ${settings.spacing}em !important;
+      text-transform: none !important; text-decoration: none !important; user-select: none !important; -webkit-user-select: none !important; }
+    ${OWNED} rt[data-hp-rt] { display: ruby-text !important; text-align: center !important; }
+    ${settings.annotationMode === 'hover' ? `${OWNED} rt[data-hp-rt]{opacity:0} ${OWNED} ruby:hover rt[data-hp-rt],a:focus ${OWNED} rt[data-hp-rt],button:focus ${OWNED} rt[data-hp-rt]{opacity:${settings.opacity}}` : ''}
   `;
   return style;
 }

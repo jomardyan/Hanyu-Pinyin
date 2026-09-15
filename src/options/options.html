@@ -1,1 +1,27 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Hanyu Pinyin Reader Settings</title><link rel="stylesheet" href="options.css"></head><body><main><h1>Hanyu Pinyin Reader</h1><p>Advanced settings are stored with Chrome sync when available.</p><section><h2>Global defaults</h2><label><span>Enable annotations globally</span><input id="enabled" type="checkbox"></label><label><span>Show selection action button</span><input id="selectionTool" type="checkbox"></label><label><span>Developer debug logging</span><input id="debug" type="checkbox"></label></section><section><h2>Performance</h2><label><span>Nodes processed per batch</span><input id="batchSize" type="number" min="10" max="500"></label><label><span>Pinyin cache entries</span><input id="cacheSize" type="number" min="50" max="10000"></label></section><section><h2>Excluded selectors</h2><p>One CSS selector per line. Matching elements will not be modified.</p><textarea id="excludedSelectors" rows="8" spellcheck="false"></textarea></section><section><h2>Website rules</h2><div id="rules"></div><p class="muted">Per-site rules are normally managed from the popup.</p></section><section><h2>Keyboard shortcuts</h2><p>Toggle Pinyin - Alt+Shift+P</p><p>Toggle hover mode - Alt+Shift+H</p><p>Annotate selected text - Alt+Shift+A</p><p class="muted">Browsers can override extension shortcuts in their extension keyboard-shortcut settings.</p></section><div class="actions"><button id="save">Save settings</button><button id="reset" class="secondary">Reset all settings</button><span id="message"></span></div></main><script src="options.js"></script></body></html>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Hanyu Pinyin settings</title><link rel="stylesheet" href="options.css"></head><body><main>
+<header><h1>Hanyu Pinyin Reader</h1><p>Reading preferences stay in this browser. Conversion runs locally.</p></header>
+<p id="message" role="status" aria-live="polite">Loading settings</p>
+<fieldset id="controls" disabled><legend class="sr-only">Settings</legend><section><h2>Reading defaults</h2>
+<label>Enable on websites without a rule<input id="enabled" type="checkbox"></label>
+<p class="muted">Always enable and Never enable rules override this default.</p>
+<label>Placement<select id="annotationMode"><option value="above">Above Chinese</option><option value="hover">On hover or link focus</option><option value="after">After Chinese</option><option value="hidden">Hidden - restore page</option></select></label>
+<label>Annotation unit<select id="granularity"><option value="word">Words and phrases</option><option value="character">Characters</option></select></label>
+<label>Tones<select id="toneStyle"><option value="marks">Tone marks</option><option value="numbers">Tone numbers</option><option value="none">Without tones</option></select></label>
+<label>Show selection toolbar<input id="selectionTool" type="checkbox"></label>
+<label>Also annotate Han characters in Japanese and Korean content<input id="processNonChinese" type="checkbox"></label>
+</section><section><h2>Appearance</h2>
+<label>Pinyin size relative to Chinese<input id="fontScale" type="number" min="0.35" max="1" step="0.05"></label>
+<label>Opacity<input id="opacity" type="number" min="0.2" max="1" step="0.05"></label>
+<label>Letter spacing<input id="spacing" type="number" min="0" max="0.3" step="0.01"></label>
+<label>Color<input id="color" type="color"></label></section>
+<section><h2>Performance and exclusions</h2>
+<label>Text nodes per batch<input id="batchSize" type="number" min="10" max="500"></label>
+<label>Maximum cache entries<input id="cacheSize" type="number" min="50" max="10000"></label>
+<label>Developer diagnostics<input id="debug" type="checkbox"></label>
+<label for="excludedSelectors">Excluded CSS selectors</label><textarea id="excludedSelectors" rows="5" spellcheck="false" placeholder="One selector per line"></textarea>
+<p class="muted">Matching content remains unchanged. Invalid selectors must be corrected before saving.</p></section>
+<section><h2>Website rules</h2><div class="add-rule"><input id="newHost" aria-label="Website hostname" placeholder="example.com"><select id="newRule" aria-label="Website behavior"><option value="always">Always enable</option><option value="never">Never enable</option></select><button type="button" id="addRule">Add rule</button></div><div id="rules"></div><p class="muted">Rules apply to the exact hostname. Rule changes save immediately.</p></section>
+<div class="actions"><button type="button" id="save">Save preferences</button><button type="button" id="export" class="secondary">Export settings</button><label class="file">Import settings<input type="file" id="import" accept=".json,application/json"></label><button type="button" id="reset" class="secondary">Reset all settings</button></div></fieldset>
+<section><h2>Keyboard shortcuts</h2><p>Toggle the current site - Alt+Shift+P</p><p>Toggle hover mode - Alt+Shift+H</p><p>Annotate selection - Alt+Shift+A</p><p>Customize shortcuts in the browser extension settings.</p></section>
+<footer>Hanyu Pinyin Reader 1.1.0 · No analytics or remote conversion</footer>
+</main><script src="options.js"></script></body></html>

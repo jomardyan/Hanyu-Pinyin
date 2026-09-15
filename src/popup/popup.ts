@@ -1,68 +1,62 @@
-import { loadSettings, resetSettings, saveSettings } from '../shared/storage';
-import type { Settings, DomainRule } from '../shared/settings';
-
-const byId = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
-const enabled = byId<HTMLInputElement>('enabled');
-const annotationMode = byId<HTMLSelectElement>('annotationMode');
-const granularity = byId<HTMLSelectElement>('granularity');
-const toneStyle = byId<HTMLSelectElement>('toneStyle');
-const domainRule = byId<HTMLSelectElement>('domainRule');
-const fontScale = byId<HTMLInputElement>('fontScale');
-const opacity = byId<HTMLInputElement>('opacity');
-const spacing = byId<HTMLInputElement>('spacing');
-const color = byId<HTMLInputElement>('color');
-const status = byId<HTMLDivElement>('status');
-const site = byId<HTMLParagraphElement>('site');
-let settings: Settings;
-let host = '';
-let tabId: number | undefined;
-
-function render(): void {
-  enabled.checked = settings.enabled;
-  annotationMode.value = settings.annotationMode;
-  granularity.value = settings.granularity;
-  toneStyle.value = settings.toneStyle;
-  domainRule.value = settings.domainRules[host] ?? 'inherit';
-  fontScale.value = String(settings.fontScale);
-  opacity.value = String(settings.opacity);
-  spacing.value = String(settings.spacing);
-  color.value = settings.color;
+import { loadSettings, patchSettings, setDomainRule, subscribeSettings } from '../shared/storage';
+import { DEFAULT_SETTINGS, isEnabledForHost, ruleForHost, type Settings, type DomainRule } from '../shared/settings';
+const el = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+let settings: Settings, host = '', tabId: number | undefined, requestId = 0, ready = false;
+const names = ['annotationMode', 'granularity', 'toneStyle', 'fontScale', 'opacity', 'spacing', 'color'] as const;
+const status = el<HTMLParagraphElement>('status');
+function error(message: string) { status.textContent = message; status.classList.add('error'); }
+function outputs() {
+  for (const name of ['fontScale', 'opacity', 'spacing']) el<HTMLOutputElement>(name + 'Value').value = el<HTMLInputElement>(name).value;
 }
-
-async function persist(): Promise<void> {
-  settings.enabled = enabled.checked;
-  settings.annotationMode = annotationMode.value as Settings['annotationMode'];
-  settings.granularity = granularity.value as Settings['granularity'];
-  settings.toneStyle = toneStyle.value as Settings['toneStyle'];
-  settings.fontScale = Number(fontScale.value);
-  settings.opacity = Number(opacity.value);
-  settings.spacing = Number(spacing.value);
-  settings.color = color.value;
-  if (host) settings.domainRules[host] = domainRule.value as DomainRule;
-  await saveSettings(settings);
-  if (tabId) void chrome.tabs.sendMessage(tabId, { type: 'hp-reprocess' }).catch(() => undefined);
+function render() {
+  for (const name of names) el<HTMLInputElement>(name).value = String(settings[name]);
+  el<HTMLInputElement>('enabled').checked = host ? isEnabledForHost(settings, host) : false;
+  el<HTMLSelectElement>('domainRule').value = ruleForHost(settings, host);
+  el<HTMLInputElement>('enabled').disabled = !host;
+  el<HTMLSelectElement>('domainRule').disabled = !host; outputs();
 }
-
-for (const control of [enabled, annotationMode, granularity, toneStyle, domainRule, fontScale, opacity, spacing, color]) {
-  control.addEventListener('change', () => void persist());
-  if (control.type === 'range' || control.type === 'color') control.addEventListener('input', () => void persist());
+async function pageAction(type: string) {
+  if (tabId === undefined) throw new Error('No active tab');
+  const result = await chrome.tabs.sendMessage(tabId, { type }, { frameId: 0 });
+  if (!result?.ok) throw new Error(result?.error || 'No response from page');
+  return result;
 }
-
-byId<HTMLButtonElement>('defaults').addEventListener('click', async () => { settings = await resetSettings(); render(); await persist(); });
-byId<HTMLButtonElement>('options').addEventListener('click', () => chrome.runtime.openOptionsPage());
-
-void (async () => {
-  settings = await loadSettings();
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  tabId = tab?.id;
-  try { host = tab?.url ? new URL(tab.url).hostname : ''; } catch { host = ''; }
-  site.textContent = host || 'This page';
-  render();
-  if (!tabId) return;
+async function refresh() {
+  if (!host) { status.textContent = 'This browser page cannot be annotated.'; return; }
   try {
-    const reply = await chrome.tabs.sendMessage(tabId, { type: 'hp-status' });
-    status.textContent = `${reply.enabled ? 'Active' : 'Inactive'} · ${reply.stats.processedNodes} text segments processed`;
-  } catch {
-    status.textContent = 'Unavailable on this browser page';
-  }
+    const state = await pageAction('hp-status'); status.classList.remove('error');
+    status.textContent = `${state.enabled ? 'Active' : 'Paused'} · ${state.stats.processedNodes} segments processed${state.stats.pending ? ' · Processing' : ''}${state.stats.errors ? ' · Some text could not be converted' : ''}`;
+  } catch { error('Reload this tab to connect the extension. Protected pages are not supported.'); }
+}
+async function save(operation: () => Promise<Settings>) {
+  if (!ready) return;
+  const id = ++requestId;
+  try { const result = await operation(); if (id === requestId) { settings = result; render(); await refresh(); } }
+  catch (e) { error(e instanceof Error ? e.message : 'Settings could not be saved'); }
+}
+for (const name of names) {
+  const control = el<HTMLInputElement>(name);
+  control.addEventListener('input', outputs);
+  control.addEventListener('change', () => {
+    const value = ['fontScale', 'opacity', 'spacing'].includes(name) ? Number(control.value) : control.value;
+    void save(() => patchSettings({ [name]: value }));
+  });
+}
+el<HTMLInputElement>('enabled').addEventListener('change', () => void save(() => setDomainRule(host, el<HTMLInputElement>('enabled').checked ? 'always' : 'never')));
+el<HTMLSelectElement>('domainRule').addEventListener('change', () => void save(() => setDomainRule(host, el<HTMLSelectElement>('domainRule').value as DomainRule)));
+el('defaults').addEventListener('click', () => void save(() => patchSettings(Object.fromEntries(names.map(name => [name, DEFAULT_SETTINGS[name]])))));
+el('options').addEventListener('click', () => void chrome.runtime.openOptionsPage());
+for (const [id, type] of [['rescan', 'hp-reprocess'], ['clearCache', 'hp-clear-cache']]) el(id!).addEventListener('click', () => void pageAction(type!).then(refresh).catch(() => error('Reload the tab and try again.')));
+void (async () => {
+  try {
+    settings = await loadSettings();
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true }); tabId = tab?.id;
+    try { const url = new URL(tab?.url || ''); if (/^https?:$/.test(url.protocol)) host = url.hostname; } catch { /* protected tab */ }
+    el('site').textContent = host || 'Browser page';
+    render(); el<HTMLFieldSetElement>('controls').disabled = false; ready = true;
+    const unsubscribe = subscribeSettings(next => { settings = next; render(); void refresh(); });
+    const interval = window.setInterval(() => void refresh(), 1200);
+    window.addEventListener('pagehide', () => { unsubscribe(); clearInterval(interval); }, { once: true });
+    await refresh();
+  } catch { error('Settings are unavailable. Reload the extension.'); }
 })();
