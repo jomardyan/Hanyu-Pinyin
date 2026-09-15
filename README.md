@@ -45,6 +45,56 @@ npm run build
 
 The unpacked extension is generated in `dist`.
 
+## Make automation
+
+The repository includes a root `Makefile` for the complete project lifecycle.
+
+```bash
+make help
+make setup
+make build
+make run
+make test
+make check
+make release
+```
+
+Useful targets include
+
+- `make doctor` validates Node.js and npm.
+- `make setup` validates the environment and installs dependencies.
+- `make dev` starts the development rebuild watcher.
+- `make run` builds and launches Chrome with the unpacked extension loaded in an isolated local profile.
+- `make run BROWSER=edge` launches Microsoft Edge instead.
+- `make run-chrome` and `make run-edge` provide explicit browser shortcuts.
+- `make fixture` serves the local compatibility fixture on `http://127.0.0.1:8080`.
+- `make assets` regenerates extension icons and Chrome Web Store graphics.
+- `make assets-validate` validates required store graphics and metadata assets.
+- `make typecheck` runs TypeScript validation only.
+- `make test` and `make test-watch` run the automated test suite.
+- `make check` performs type checking, tests, the production build, and store asset validation.
+- `make package` rebuilds and creates the release ZIP files without repeating the full test suite.
+- `make release` runs the complete validated Chrome Web Store release flow.
+- `make ci` installs dependencies and runs the complete release flow.
+- `make release-files` lists the generated release packages.
+- `make clean` removes generated build and release output.
+- `make clean-all` also removes dependencies and isolated browser test profiles.
+
+### Windows PowerShell
+
+Windows users do not need GNU Make. The root `make.ps1` exposes the same workflow.
+
+```powershell
+.\make.ps1 help
+.\make.ps1 setup
+.\make.ps1 run
+.\make.ps1 run -Browser edge
+.\make.ps1 check
+.\make.ps1 release
+```
+
+The `run` workflow uses `scripts/run-extension.mjs` to locate Chrome or Edge, creates an isolated profile under `.browser-profile`, loads `dist` with `--load-extension`, and opens a Chinese test page.
+
 ## Load in Chrome
 
 1. Run `npm install` and `npm run build`.
@@ -53,6 +103,8 @@ The unpacked extension is generated in `dist`.
 4. Choose Load unpacked.
 5. Select the `dist` directory.
 
+Alternatively run `make run` or `.\make.ps1 run` to launch a dedicated Chrome instance automatically.
+
 ## Load in Microsoft Edge
 
 1. Build the extension.
@@ -60,6 +112,8 @@ The unpacked extension is generated in `dist`.
 3. Enable Developer mode.
 4. Choose Load unpacked.
 5. Select the `dist` directory.
+
+Alternatively run `make run-edge` or `.\make.ps1 run-edge`.
 
 ## Permissions
 
@@ -118,11 +172,23 @@ The production extension manifest includes PNG icons at 16, 32, 48, and 128 pixe
 Create the complete release locally with
 
 ```bash
+make release
+```
+
+or with npm directly
+
+```bash
 npm install
 npm run store:release
 ```
 
-The command validates TypeScript and tests, generates all store graphics, builds the production extension, validates the store assets, and writes the final ZIP files into `release`.
+On Windows PowerShell
+
+```powershell
+.\make.ps1 release
+```
+
+The release workflow validates TypeScript and tests, generates all store graphics, builds the production extension, validates the store assets, and writes the final ZIP files into `release`.
 
 GitHub Actions invokes the same `store:release` command and uploads the resulting ZIP files when Actions runners are available.
 
