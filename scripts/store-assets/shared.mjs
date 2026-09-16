@@ -15,7 +15,7 @@ export const border = '#cbd5e1';
 export const soft = '#f8fafc';
 export const white = '#ffffff';
 export const font = 'Inter, Arial, sans-serif';
-export const cjk = '"Noto Sans CJK SC", "Noto Sans SC", "Microsoft YaHei", sans-serif';
+export const cjk = 'Noto Sans CJK SC, Noto Sans SC, Microsoft YaHei, sans-serif';
 
 export async function ensureDirectories() {
   await mkdir(iconDir, { recursive: true });
