@@ -41,3 +41,12 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+Noto Sans CJK SC
+SIL Open Font License 1.1
+Copyright 2014-2023 Adobe (http://www.adobe.com/)
+Copyright 2014-2023 The Noto Project Authors (https://github.com/notofonts/noto-cjk)
+
+This font is included in assets/fonts/NotoSansCJKsc-Regular.otf for deterministic
+Chrome Web Store screenshots. The full license text is available at:
+https://scripts.sil.org/OFL

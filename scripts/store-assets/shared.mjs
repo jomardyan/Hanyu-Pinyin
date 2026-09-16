@@ -1,11 +1,17 @@
-import sharp from 'sharp';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { mkdir } from 'node:fs/promises';
-import { resolve } from 'node:path';
+import { resolve, join } from 'node:path';
+import { tmpdir } from 'node:os';
 
 export const root = resolve(process.cwd());
 export const iconDir = resolve(root, 'assets/icons');
 export const storeDir = resolve(root, 'chrome-store/assets');
 export const screenshotDir = resolve(storeDir, 'screenshots');
+const fontDirectory = resolve(root, 'assets/fonts');
+const fontConfig = join(tmpdir(), `hanyu-pinyin-fonts-${process.pid}.conf`);
+writeFileSync(fontConfig, `<?xml version="1.0"?>\n<!DOCTYPE fontconfig SYSTEM "fonts.dtd">\n<fontconfig><dir>${fontDirectory}</dir><include ignore_missing="yes">/etc/fonts/fonts.conf</include></fontconfig>`);
+process.env.FONTCONFIG_FILE = fontConfig;
+const { default: sharp } = await import('sharp');
 
 export const blue = '#2563eb';
 export const deepBlue = '#1e3a8a';
@@ -33,6 +39,14 @@ export function esc(value) {
 export async function render(svg, output, width, height) {
   await sharp(Buffer.from(svg))
     .resize(width, height, { fit: 'fill' })
+    .png({ compressionLevel: 9, adaptiveFiltering: true })
+    .toFile(output);
+}
+
+export async function resizeImage(input, output, width, height = width) {
+  await sharp(input)
+    .resize(width, height, { fit: 'cover' })
+    .removeAlpha()
     .png({ compressionLevel: 9, adaptiveFiltering: true })
     .toFile(output);
 }
