@@ -15,7 +15,7 @@ Declared Japanese and Korean content is excluded by default. Enable the advanced
 
 ## Build
 
-Use Node.js 20 or newer and npm. Store artwork needs a CJK-capable system font, such as Noto CJK. No font files are bundled with this repository.
+For npm and Makefile commands, use Node.js 20 or newer and npm. The Windows PowerShell wrapper can set these up locally. Store artwork needs a CJK-capable system font, such as Noto CJK. No font files are bundled with this repository.
 
 ```bash
 npm install
@@ -47,7 +47,7 @@ These suites exercise the DOM and UI with mocked Chrome APIs. They do not replac
 
 ## Make and PowerShell
 
-Both wrappers invoke the same Node task dispatcher and propagate failures.
+The Makefile uses an installed Node.js 20+ and npm. On Windows, `make.ps1` works without a preinstalled Node.js: it downloads a SHA-256-verified portable Node.js archive into the ignored `.tools` folder when needed. Build-related tasks install npm packages automatically on first use. An internet connection is needed for the first download and npm install; later runs reuse the local tools. No administrator rights or machine-wide PATH changes are needed. The default `make.ps1` help works offline.
 
 ```bash
 make help

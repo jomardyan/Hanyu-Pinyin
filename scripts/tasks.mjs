@@ -28,7 +28,7 @@ async function doctor() {
   console.log(`Node.js ${process.version}`); await exec('npm', ['--version']);
   console.log('Store graphics need a CJK-capable system font. Browser tests additionally need Python and Playwright.');
 }
-async function install() { await exec('npm', existsSync(resolve(root, 'package-lock.json')) ? ['ci'] : ['install']); }
+async function install() { await exec('npm', existsSync(resolve(root, 'package-lock.json')) ? ['ci'] : ['install', '--no-package-lock']); }
 async function clean(all = false) {
   // Fixed repository-local paths. Never interpolate Make variables into an rm command.
   for (const dir of ['dist', 'release', '.test-build', 'coverage', ...(all ? ['node_modules', '.browser-profile'] : [])]) await rm(resolve(root, dir), { recursive: true, force: true });
