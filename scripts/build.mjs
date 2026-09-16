@@ -12,6 +12,7 @@ async function copyStatic() {
   const manifest = JSON.parse(await readFile('public/manifest.json', 'utf8'));
   if (pkg.version !== manifest.version) throw new Error('Package and manifest versions must match');
   for (const [from, to] of [['public/manifest.json', 'manifest.json'], ['src/popup/popup.html', 'popup.html'], ['src/popup/popup.css', 'popup.css'], ['src/options/options.html', 'options.html'], ['src/options/options.css', 'options.css'], ['LICENSE', 'LICENSE'], ['THIRD-PARTY-NOTICES.txt', 'THIRD-PARTY-NOTICES.txt']]) await cp(from, resolve(dist, to));
+  await cp('public/_locales', resolve(dist, '_locales'), { recursive: true, force: true });
   await mkdir(resolve(dist, 'assets/icons'), { recursive: true });
   for (const size of [16, 32, 48, 128]) await cp(`assets/icons/icon${size}.png`, resolve(dist, `assets/icons/icon${size}.png`));
 }

@@ -6,7 +6,7 @@
 - Confirm the production ZIP contains `manifest.json` at the ZIP root.
 - Confirm the ZIP contains `assets/icons/icon16.png`, `icon32.png`, `icon48.png`, and `icon128.png`.
 - Confirm production JavaScript is bundled locally and no external runtime dependency is required.
-- Upload `hanyu-pinyin-reader-1.0.0-chrome-web-store.zip` from the CI artifact.
+- Upload the `hanyu-pinyin-reader-<version>-chrome-web-store.zip` release artifact.
 
 ## Store listing
 
@@ -14,6 +14,7 @@
 - Category - Education
 - Language - English
 - Copy the short and detailed descriptions from `listing.md`.
+- For each additional language in `localized-listings.md`, choose its locale in the dashboard and add the matching detailed description. The title and summary come from the packaged `_locales` messages.
 - Upload `assets/store-icon-128.png`.
 - Upload all five 1280 by 800 screenshots.
 - Upload `assets/promo-small-440x280.png`.

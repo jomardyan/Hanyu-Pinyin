@@ -1,0 +1,7 @@
+{
+  "extensionName": { "message": "漢語拼音閱讀器" },
+  "extensionDescription": { "message": "在中文網頁顯示於本機產生的拼音標註。支援詞組、聲調、外觀、選取文字操作及網站設定。" },
+  "togglePinyin": { "message": "切換拼音標註" },
+  "toggleHover": { "message": "切換游標移入時顯示拼音" },
+  "annotateSelection": { "message": "為選取的中文加入拼音" }
+}

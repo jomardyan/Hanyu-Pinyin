@@ -1,0 +1,7 @@
+{
+  "extensionName": { "message": "Hanyu Pinyin Reader" },
+  "extensionDescription": { "message": "Hiển thị phiên âm Pinyin cho trang web tiếng Trung ngay trên thiết bị. Tùy chỉnh thanh điệu, giao diện và từng trang web." },
+  "togglePinyin": { "message": "Bật hoặc tắt phiên âm Pinyin" },
+  "toggleHover": { "message": "Bật hoặc tắt chế độ chỉ hiện khi rê chuột" },
+  "annotateSelection": { "message": "Thêm Pinyin cho văn bản tiếng Trung đã chọn" }
+}

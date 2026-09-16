@@ -1,0 +1,7 @@
+{
+  "extensionName": { "message": "汉语拼音阅读器" },
+  "extensionDescription": { "message": "在中文网页上显示本地生成的拼音注音。支持词组、声调、外观、划词操作和网站设置。" },
+  "togglePinyin": { "message": "切换拼音注音" },
+  "toggleHover": { "message": "切换悬停时显示拼音" },
+  "annotateSelection": { "message": "为选中的中文添加拼音" }
+}

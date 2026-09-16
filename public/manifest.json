@@ -1,8 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "Hanyu Pinyin Reader",
+  "name": "__MSG_extensionName__",
+  "default_locale": "en",
   "version": "1.1.0",
-  "description": "Read Chinese webpages with local, phrase-aware Pinyin. Customize tones, appearance, selection actions, and site preferences.",
+  "description": "__MSG_extensionDescription__",
   "icons": {
     "16": "assets/icons/icon16.png",
     "32": "assets/icons/icon32.png",
@@ -18,7 +19,7 @@
     "service_worker": "background.js"
   },
   "action": {
-    "default_title": "Hanyu Pinyin Reader",
+    "default_title": "__MSG_extensionName__",
     "default_popup": "popup.html",
     "default_icon": {
       "16": "assets/icons/icon16.png",
@@ -47,19 +48,19 @@
       "suggested_key": {
         "default": "Alt+Shift+P"
       },
-      "description": "Toggle Pinyin annotations"
+      "description": "__MSG_togglePinyin__"
     },
     "toggle-hover": {
       "suggested_key": {
         "default": "Alt+Shift+H"
       },
-      "description": "Toggle hover-only Pinyin mode"
+      "description": "__MSG_toggleHover__"
     },
     "annotate-selection": {
       "suggested_key": {
         "default": "Alt+Shift+A"
       },
-      "description": "Annotate selected Chinese text"
+      "description": "__MSG_annotateSelection__"
     }
   },
   "content_security_policy": {

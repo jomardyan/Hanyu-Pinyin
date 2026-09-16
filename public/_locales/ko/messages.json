@@ -1,0 +1,7 @@
+{
+  "extensionName": { "message": "Hanyu Pinyin Reader" },
+  "extensionDescription": { "message": "중국어 웹페이지에 기기에서 생성한 병음 발음을 표시합니다. 성조, 표시 방식, 선택 영역, 사이트별 설정을 지원합니다." },
+  "togglePinyin": { "message": "병음 표시 전환" },
+  "toggleHover": { "message": "마우스를 올릴 때만 병음 표시 전환" },
+  "annotateSelection": { "message": "선택한 중국어에 병음 표시" }
+}

@@ -7,6 +7,16 @@ export async function validateBuild(dir = resolve('dist')) {
   if (manifest.manifest_version !== 3 || manifest.version !== pkg.version || !/^\d+\.\d+\.\d+(\.\d+)?$/.test(manifest.version)) throw new Error('Invalid manifest or version mismatch');
   if (/preview|fallback/i.test(manifest.name + (manifest.version_name || ''))) throw new Error('Preview builds cannot be packaged as store releases');
   if (manifest.key || manifest.update_url) throw new Error('Remove local key or update_url before release');
+  if (!manifest.default_locale) throw new Error('Localized manifest needs a default_locale');
+  const localeDirs = await readdir(join(dir, '_locales'));
+  if (!localeDirs.includes(manifest.default_locale)) throw new Error('Missing default locale');
+  for (const locale of localeDirs) {
+    const messages = JSON.parse(await readFile(join(dir, '_locales', locale, 'messages.json'), 'utf8'));
+    for (const key of ['extensionName', 'extensionDescription', 'togglePinyin', 'toggleHover', 'annotateSelection']) {
+      if (typeof messages[key]?.message !== 'string' || !messages[key].message.trim()) throw new Error(`Missing ${key} in ${locale}`);
+    }
+    if (messages.extensionDescription.message.length > 132) throw new Error(`Summary exceeds 132 characters in ${locale}`);
+  }
   const files = [manifest.background.service_worker, manifest.action.default_popup, manifest.options_page,
     ...manifest.content_scripts.flatMap(entry => entry.js), 'LICENSE', 'THIRD-PARTY-NOTICES.txt'];
   for (const file of files) {

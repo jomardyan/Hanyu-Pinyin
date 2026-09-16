@@ -1,0 +1,7 @@
+{
+  "extensionName": { "message": "Hanyu Pinyin Reader" },
+  "extensionDescription": { "message": "Lisez les pages en chinois avec un pinyin généré dans le navigateur. Réglez les tons, l’affichage, la sélection et les sites." },
+  "togglePinyin": { "message": "Afficher ou masquer les annotations en pinyin" },
+  "toggleHover": { "message": "Activer ou désactiver le pinyin au survol" },
+  "annotateSelection": { "message": "Annoter le texte chinois sélectionné en pinyin" }
+}

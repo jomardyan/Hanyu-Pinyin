@@ -1,0 +1,7 @@
+{
+  "extensionName": { "message": "Hanyu Pinyin Reader" },
+  "extensionDescription": { "message": "Read Chinese webpages with local, phrase-aware Pinyin. Customize tones, appearance, selection actions, and site preferences." },
+  "togglePinyin": { "message": "Toggle Pinyin annotations" },
+  "toggleHover": { "message": "Toggle hover-only Pinyin mode" },
+  "annotateSelection": { "message": "Annotate selected Chinese text" }
+}

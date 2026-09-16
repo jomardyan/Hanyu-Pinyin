@@ -1,0 +1,7 @@
+{
+  "extensionName": { "message": "Hanyu Pinyin Reader" },
+  "extensionDescription": { "message": "中国語のウェブページに、端末内で生成するピンインの読みを表示。声調、表示方法、選択範囲、サイト別設定に対応。" },
+  "togglePinyin": { "message": "ピンインの表示を切り替え" },
+  "toggleHover": { "message": "ホバー時のみ表示するモードを切り替え" },
+  "annotateSelection": { "message": "選択した中国語にピンインを付ける" }
+}
