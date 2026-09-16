@@ -55,6 +55,8 @@ make setup
 make dev
 make run
 make run BROWSER=edge
+make run BROWSER=chromium URL=http://127.0.0.1:8765/fixtures/sample.html
+make run BROWSER=chromium PROFILE=.browser-profile/review DIST=.test-build BINARY=/usr/bin/chromium
 make test
 make test-browser
 make test-ui
@@ -73,7 +75,7 @@ make clean
 
 The default run target uses Chromium and a dedicated `.browser-profile` directory. Branded Chrome and Edge are opened at their extension management page for manual unpacked loading. Do not assume command-line sideload flags work in current branded browsers. The runner never uses the normal personal browser profile.
 
-Additional tasks include doctor, install, build, run-chrome, run-edge, run-chromium, test-watch, test-backend, typecheck, assets, assets-validate, package, ci, release-files, and clean-all. `package` skips unit tests. `clean-all` also removes dependencies and dedicated test profiles. Neither cleanup command removes source files.
+Additional tasks include doctor, install, build, build-validate, run-chrome, run-edge, run-chromium, test-watch, test-backend, typecheck, assets, store-generate, assets-validate, store-validate, package, store-release, ci, release-files, and clean-all. `package` skips unit tests. `clean-all` also removes dependencies and dedicated test profiles. Neither cleanup command removes source files. Browser launch variables are `BROWSER`, `DIST`, `PROFILE`, `URL`, and `BINARY`; `PROFILE`, `URL`, and `BINARY` apply to `run` targets.
 
 ## Install an unpacked build
 
