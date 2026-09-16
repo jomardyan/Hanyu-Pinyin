@@ -111,7 +111,7 @@ try {
         & (Join-Path $nodeDir 'npm.cmd') install --no-package-lock
         if ($LASTEXITCODE -ne 0) { throw "npm install failed with exit code $LASTEXITCODE" }
     }
-    & $nodeExe scripts/tasks.mjs $Target $Browser
+    & $nodeExe scripts/tasks.mjs $Target --browser $Browser
     $code = $LASTEXITCODE
 } finally {
     Pop-Location
