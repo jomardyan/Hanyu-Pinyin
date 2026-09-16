@@ -2,7 +2,8 @@ import { loadSettings, patchSettings, setDomainRule, subscribeSettings } from '.
 import { DEFAULT_SETTINGS, isEnabledForHost, ruleForHost, type Settings, type DomainRule } from '../shared/settings';
 const el = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 let settings: Settings, host = '', tabId: number | undefined, requestId = 0, ready = false;
-const names = ['annotationMode', 'granularity', 'toneStyle', 'fontScale', 'opacity', 'spacing', 'color'] as const;
+const appearance = ['fontScale', 'opacity', 'spacing', 'color'] as const;
+const names = ['annotationMode', 'granularity', 'toneStyle', ...appearance] as const;
 const status = el<HTMLParagraphElement>('status');
 function error(message: string) { status.textContent = message; status.classList.add('error'); }
 function outputs() {
@@ -25,7 +26,7 @@ async function refresh() {
   if (!host) { status.textContent = 'This browser page cannot be annotated.'; return; }
   try {
     const state = await pageAction('hp-status'); status.classList.remove('error');
-    status.textContent = `${state.enabled ? 'Active' : 'Paused'} · ${state.stats.processedNodes} segments processed${state.stats.pending ? ' · Processing' : ''}${state.stats.errors ? ' · Some text could not be converted' : ''}`;
+    status.textContent = `${state.enabled ? 'Active' : 'Paused'} · ${state.stats.processedSegments} segments processed${state.stats.pending ? ' · Processing' : ''}${state.stats.errors ? ' · Some text could not be converted' : ''}`;
   } catch { error('Reload this tab to connect the extension. Protected pages are not supported.'); }
 }
 async function save(operation: () => Promise<Settings>) {
@@ -44,7 +45,8 @@ for (const name of names) {
 }
 el<HTMLInputElement>('enabled').addEventListener('change', () => void save(() => setDomainRule(host, el<HTMLInputElement>('enabled').checked ? 'always' : 'never')));
 el<HTMLSelectElement>('domainRule').addEventListener('change', () => void save(() => setDomainRule(host, el<HTMLSelectElement>('domainRule').value as DomainRule)));
-el('defaults').addEventListener('click', () => void save(() => patchSettings(Object.fromEntries(names.map(name => [name, DEFAULT_SETTINGS[name]])))));
+// Reset only the controls inside the Appearance section, not placement, unit, or tones.
+el('defaults').addEventListener('click', () => void save(() => patchSettings(Object.fromEntries(appearance.map(name => [name, DEFAULT_SETTINGS[name]])))));
 el('options').addEventListener('click', () => void chrome.runtime.openOptionsPage());
 for (const [id, type] of [['rescan', 'hp-reprocess'], ['clearCache', 'hp-clear-cache']]) el(id!).addEventListener('click', () => void pageAction(type!).then(refresh).catch(() => error('Reload the tab and try again.')));
 void (async () => {

@@ -1,4 +1,4 @@
-import { canonicalHost, isEnabledForHost, mergeSettings, type Settings } from '../shared/settings';
+import { canonicalHost, isEnabledForHost, mergeSettings, MAX_RULES, type Settings } from '../shared/settings';
 import { SETTINGS_KEY } from '../shared/storage';
 let writeQueue: Promise<unknown> = Promise.resolve();
 async function read(): Promise<Settings> {
@@ -54,7 +54,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       if (!host || !['inherit', 'always', 'never'].includes(rule)) throw new Error('Invalid website rule');
       if (rule === 'inherit') delete settings.domainRules[host];
       else {
-        if (!Object.hasOwn(settings.domainRules, host) && Object.keys(settings.domainRules).length >= 500) throw new Error('Remove an unused website rule before adding another');
+        if (!Object.hasOwn(settings.domainRules, host) && Object.keys(settings.domainRules).length >= MAX_RULES) throw new Error('Remove an unused website rule before adding another');
         settings.domainRules[host] = rule;
       }
     }

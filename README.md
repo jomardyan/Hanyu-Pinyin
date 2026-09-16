@@ -23,7 +23,7 @@ npm run check
 npm run store:release
 ```
 
-The repository pins direct dependency versions. There is no committed lockfile, so transitive dependencies are not fully reproducible. The task runner uses npm ci when a lockfile exists and npm install otherwise.
+The repository pins direct dependency versions and commits `package-lock.json`, so transitive dependencies resolve reproducibly. The task runner and CI use npm ci when the lockfile is present and fall back to npm install otherwise.
 
 `npm run check` runs the real dependency-backed TypeScript and Vitest checks, builds the extension, validates its files, and runs compiled-worker tests with mocked browser APIs. Browser DOM and UI suites are separate commands.
 

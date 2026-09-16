@@ -6,6 +6,11 @@ ROOT=Path(__file__).resolve().parents[1]
 import os, shutil
 HARNESS=Path(os.environ.get("HP_TEST_HARNESS", str(ROOT/".test-build/harness.js")))
 BINARY=os.environ.get("CHROMIUM_BIN") or shutil.which("chromium")
+def launch(p):
+ """Prefer an explicit binary, then Playwright's Chromium, then an installed branded Chrome."""
+ if BINARY: return p.chromium.launch(executable_path=BINARY,headless=True,args=['--no-sandbox'])
+ try: return p.chromium.launch(headless=True,args=['--no-sandbox'])
+ except Exception: return p.chromium.launch(channel='chrome',headless=True,args=['--no-sandbox'])
 results=[]
 def test(name,fn):
  t=time.time()
@@ -14,7 +19,7 @@ def test(name,fn):
 def eq(a,b):
  assert a==b, f'{a!r} != {b!r}'
 with sync_playwright() as p:
- browser=p.chromium.launch(executable_path=BINARY,headless=True,args=['--no-sandbox'])
+ browser=launch(p)
  page=browser.new_page();page.set_default_timeout(15000);page.set_content('<html lang="zh"><body></body></html>');page.add_script_tag(path=str(HARNESS))
  def setup(html,settings=None):
   page.evaluate('''([html,opts])=>{window.c?.destroy();window.st?.destroy();document.body.innerHTML=html;window.c=new __hpTest.PageController();c.apply(__hpTest.settings.mergeSettings(opts));window.st=new __hpTest.SelectionTool(c);}''',[html,settings or {}])
@@ -115,7 +120,31 @@ with sync_playwright() as p:
   setup('<p id="upper" style="text-transform:uppercase">api 中文</p>');drained()
   eq(evaluate("getComputedStyle(upper.querySelector('[data-hp-root]')).textTransform"),'uppercase')
  test('Original text transform styling is preserved for mixed text',transform)
+ def blank_frame():
+  class Handler(BaseHTTPRequestHandler):
+   def do_GET(self):
+    body=b'<!doctype html><html lang="zh"><body><iframe id="f"></iframe></body></html>'
+    self.send_response(200);self.send_header('Content-Type','text/html; charset=utf-8');self.send_header('Content-Length',str(len(body)));self.end_headers();self.wfile.write(body)
+   def log_message(self,*a):pass
+  server=ThreadingHTTPServer(('127.0.0.1',0),Handler);threading.Thread(target=server.serve_forever,daemon=True).start()
+  tab=browser.new_page()
+  try:
+   tab.goto('http://127.0.0.1:%d/'%server.server_address[1])
+   tab.wait_for_function('document.getElementById("f")?.contentDocument?.readyState==="complete"')
+   frame=[f for f in tab.frames if f.url=='about:blank'][0]
+   frame.add_script_tag(path=str(HARNESS))
+   # The frame inherits the parent origin, so website rules must resolve to the parent host.
+   eq(frame.evaluate('()=>__hpTest.frameHost()'),'127.0.0.1')
+   frame.evaluate("""()=>{document.body.innerHTML='<p>\u5b66\u4e60\u4e2d\u6587</p>';window.c=new __hpTest.PageController();c.apply(__hpTest.settings.mergeSettings({domainRules:{'127.0.0.1':'never'}}))}""")
+   eq(frame.evaluate('()=>c.enabled'),False)
+   eq(frame.evaluate('()=>document.querySelectorAll("[data-hp-root]").length'),0)
+   frame.evaluate("""()=>c.apply(__hpTest.settings.mergeSettings({enabled:false,domainRules:{'127.0.0.1':'always'}}))""")
+   eq(frame.evaluate('()=>c.enabled'),True)
+   frame.wait_for_function('document.querySelectorAll("[data-hp-root]").length>0')
+  finally:
+   tab.close();server.shutdown();server.server_close()
+ test('Website rules apply to about:blank frames that inherit the parent origin',blank_frame)
  browser.close()
-(ROOT/'browser-test-results.json').write_text(json.dumps({'conversion_backend':os.environ.get('HP_TEST_BACKEND', 'Production pinyin-pro adapter from the test harness'),'results':results},indent=2))
+(ROOT/'browser-test-results.json').write_text(json.dumps({'conversion_backend':os.environ.get('HP_TEST_BACKEND', 'Production pinyin-pro adapter from the test harness'),'results':results},indent=2),encoding='utf-8')
 print('TOTAL',len(results),'PASS',sum(r['pass'] for r in results),'FAIL',sum(not r['pass'] for r in results),flush=True)
 sys.exit(0 if all(r['pass'] for r in results) else 1)

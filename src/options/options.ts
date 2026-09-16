@@ -66,4 +66,6 @@ el<HTMLInputElement>('import').addEventListener('change', () => void guard(async
   if (!confirm('Replace all saved preferences and website rules with this file?')) return;
   settings = await saveSettings(next); render(); notice('Settings imported');
 }));
+// Shown to users, so it is read from the manifest rather than duplicated in the page.
+try { el('version').textContent = chrome.runtime.getManifest().version; } catch { el('version').textContent = 'unknown'; }
 void guard(async () => { settings = await loadSettings(); render(); el<HTMLFieldSetElement>('controls').disabled = false; notice(''); });

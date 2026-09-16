@@ -3,9 +3,30 @@ import { ScanCursor, OWNED, UI, closestAcrossShadow, isProcessableTextNode, shou
 import { configurePinyinCache, clearPinyinCache, pinyinCacheStats } from '../pinyin/pinyin-engine';
 import { isEnabledForHost, mergeSettings, type Settings } from '../shared/settings';
 
+/** about:blank and srcdoc frames inherit the parent origin but report an empty hostname,
+ *  so website rules have to come from the nearest ancestor origin instead. */
+export function frameHost(): string {
+  if (location.hostname) return location.hostname;
+  try {
+    const origins = location.ancestorOrigins;
+    for (let index = 0; index < (origins?.length ?? 0); index++) {
+      const origin = origins.item(index);
+      if (!origin || origin === 'null') continue;
+      const host = new URL(origin).hostname;
+      if (host) return host;
+    }
+  } catch { /* opaque or otherwise unreadable ancestors stay unmatched */ }
+  return '';
+}
+/** The popup reports the running version, so it must never drift from the manifest. */
+function extensionVersion(): string {
+  try { return chrome.runtime.getManifest().version; } catch { return 'unknown'; }
+}
+
 export class PageController {
   settings = mergeSettings(undefined);
   enabled = false;
+  readonly host = frameHost();
   private roots = new Set<Document | ShadowRoot>([document]);
   private jobs = new Map<Node, ScanCursor>();
   private failed = new WeakMap<Node, string>();
@@ -23,15 +44,15 @@ export class PageController {
     this.restore();
     this.settings = mergeSettings(value); this.failed = new WeakMap(); this.suppressed = new WeakSet();
     configurePinyinCache(this.settings.cacheSize);
-    this.enabled = isEnabledForHost(this.settings, location.hostname) && this.settings.annotationMode !== 'hidden';
+    this.enabled = isEnabledForHost(this.settings, this.host) && this.settings.annotationMode !== 'hidden';
     this.stats.processedNodes = this.stats.processedSegments = this.stats.visitedNodes = this.stats.errors = this.stats.batches = 0;
     this.stopped = false;
     if (this.enabled) { this.ensureRoot(document); this.observe(); this.enqueue(document); }
   }
   rescan(): void { this.apply(this.settings); }
   clearCache(): void { clearPinyinCache(); }
-  getState() { return { enabled: this.enabled, host: location.hostname, mode: this.settings.annotationMode,
-    stats: { ...this.stats, pending: this.jobs.size, cache: pinyinCacheStats() }, version: '1.1.0' }; }
+  getState() { return { enabled: this.enabled, host: this.host, mode: this.settings.annotationMode,
+    stats: { ...this.stats, pending: this.jobs.size, cache: pinyinCacheStats() }, version: extensionVersion() }; }
   private cancel(): void {
     if (this.timer !== null) {
       if (this.idle) window.cancelIdleCallback(this.timer); else window.clearTimeout(this.timer);

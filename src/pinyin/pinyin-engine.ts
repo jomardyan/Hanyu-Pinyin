@@ -38,13 +38,16 @@ export function pronounce(text: string, style: ToneStyle, granularity: Granulari
       const left = chars.slice(Math.max(0, offset - 16), offset).join('') || (start === 0 ? before : '');
       const right = chars.slice(offset + 128, offset + 144).join('') || (start + run.length === text.length ? after : '');
       const syllables = pinyin(left + chunk + right, { type: 'array', toneType, nonZh: 'spaced', traditional: true }).slice(Array.from(left).length, Array.from(left).length + cps.length);
+      // Without one syllable per character the offsets are meaningless, so nothing may be
+      // attributed to a character. Misaligned sounds would be confidently wrong, not merely absent.
+      const aligned = syllables.length === cps.length;
       let words = granularity === 'word'
         ? segment(chunk, { traditional: true }).map(token => token.origin) : cps;
-      if (words.join('') !== chunk || syllables.length !== cps.length) words = cps;
+      if (!aligned || words.join('') !== chunk) words = cps;
       let i = 0;
       for (const word of words) {
         const n = Array.from(word).length;
-        const sounds = syllables.slice(i, i + n); i += n;
+        const sounds = aligned ? syllables.slice(i, i + n) : []; i += n;
         // Unmapped characters stay visible, rather than receiving fake pronunciation.
         const known = sounds.length === n && sounds.every(sound => sound && !HAN_RE.test(sound));
         out.push({ han: word, pinyin: known ? sounds.join(' ') : '' });
