@@ -64,6 +64,12 @@ with sync_playwright() as p:
   options.locator('#import').set_input_files({'name':'bad.json','mimeType':'application/json','buffer':b'{"format":"other"}'})
   options.wait_for_function("document.getElementById('message').textContent.includes('Not a supported')")
  test('Unsupported settings imports are rejected',badimport)
+ def arrayimport():
+  options.evaluate("document.getElementById('message').textContent=''")
+  options.locator('#import').set_input_files({'name':'array.json','mimeType':'application/json','buffer':b'{"format":"hanyu-pinyin-settings","version":1,"settings":[]}'})
+  options.wait_for_function("document.getElementById('message').textContent.includes('Not a supported')")
+  eq(options.evaluate("mock.local['hp-settings-v2'].fontScale"),.65)
+ test('Array-shaped settings imports are rejected without resetting preferences',arrayimport)
  options.screenshot(path=str(ROOT/'options-ui-tested.png'),full_page=True);options.close();browser.close()
 (ROOT/'ui-test-results.json').write_text(json.dumps({'api_backend':'Mocked Chrome API, actual compiled worker and UI code','results':results},indent=2),encoding='utf-8')
 print('TOTAL',len(results),'PASS',sum(x['pass']for x in results),flush=True)

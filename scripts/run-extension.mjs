@@ -3,7 +3,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import { resolve, dirname, relative, isAbsolute } from 'node:path';
 import { fileURLToPath } from 'node:url';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const args = process.argv.slice(2), options = {};
+const args = process.argv.slice(2), options = Object.fromEntries(['browser', 'dist', 'profile', 'url', 'binary'].map(name => [name, process.env[`HP_${name.toUpperCase()}`]]));
 for (let i = 0; i < args.length; i += 2) {
   if (!['--browser', '--dist', '--profile', '--url', '--binary'].includes(args[i]) || !args[i + 1] || args[i + 1].startsWith('--')) throw new Error('Use --browser chrome|edge|chromium with optional --dist, --profile, --url, or --binary');
   options[args[i].slice(2)] = args[i + 1];

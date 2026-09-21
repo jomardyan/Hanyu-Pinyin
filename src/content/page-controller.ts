@@ -1,5 +1,5 @@
 import { annotateTextNode, installAnnotationStyles, restoreAll, restoreWrapper } from './annotation-engine';
-import { ScanCursor, OWNED, UI, closestAcrossShadow, isProcessableTextNode, shouldSkipElement, splitLongText } from './dom-scanner';
+import { ScanCursor, OWNED, UI, closestAcrossShadow, parentAcrossShadow, isProcessableTextNode, shouldSkipElement, splitLongText } from './dom-scanner';
 import { configurePinyinCache, clearPinyinCache, pinyinCacheStats } from '../pinyin/pinyin-engine';
 import { isEnabledForHost, mergeSettings, type Settings } from '../shared/settings';
 
@@ -101,7 +101,8 @@ export class PageController {
           if (cursor.done) this.jobs.delete(root);
           if (!node || !node.isConnected) continue;
           if (node instanceof Element && node.shadowRoot && !shouldSkipElement(node, this.settings)) {
-            if (!this.roots.has(node.shadowRoot)) { this.ensureRoot(node.shadowRoot); this.enqueue(node.shadowRoot); }
+            this.ensureRoot(node.shadowRoot);
+            this.enqueue(node.shadowRoot);
           }
           if (this.suppressed.has(node) || !isProcessableTextNode(node, this.settings) || this.failed.get(node) === node.data) continue;
           const suffix = splitLongText(node); if (suffix) this.enqueue(suffix);
@@ -144,7 +145,17 @@ export class PageController {
       this.observer.disconnect();
       for (const element of changed) {
         if (element.matches(OWNED)) for (const node of restoreWrapper(element)) added.add(node);
-        else restoreAll(element);
+        else {
+          restoreAll(element);
+          // querySelectorAll cannot cross shadow boundaries. An exclusion on a
+          // host or ancestor must also restore every discovered nested root.
+          for (const root of this.roots) {
+            if (!(root instanceof ShadowRoot)) continue;
+            for (let parent: Element | null = root.host; parent; parent = parentAcrossShadow(parent)) {
+              if (parent === element) { restoreAll(root); break; }
+            }
+          }
+        }
       }
       for (const node of added) this.enqueue(node);
     } finally { this.handling = false; this.observe(); }

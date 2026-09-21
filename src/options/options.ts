@@ -61,7 +61,7 @@ el<HTMLInputElement>('import').addEventListener('change', () => void guard(async
   const control = el<HTMLInputElement>('import'), file = control.files?.[0]; control.value = '';
   if (!file) return; if (file.size > 100000) throw new Error('Settings file is too large');
   const value = JSON.parse(await file.text());
-  if (value?.format !== 'hanyu-pinyin-settings' || value.version !== 1 || !value.settings || typeof value.settings !== 'object') throw new Error('Not a supported Hanyu Pinyin settings file');
+  if (value?.format !== 'hanyu-pinyin-settings' || value.version !== 1 || !value.settings || typeof value.settings !== 'object' || Array.isArray(value.settings)) throw new Error('Not a supported Hanyu Pinyin settings file');
   const next = mergeSettings(value.settings); validateSelectors(next.excludedSelectors);
   if (!confirm('Replace all saved preferences and website rules with this file?')) return;
   settings = await saveSettings(next); render(); notice('Settings imported');

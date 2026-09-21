@@ -1,27 +1,26 @@
 param(
-    [ValidateSet('help','doctor','setup','install','build','dev','run','run-chrome','run-edge','run-chromium','test','test-watch','test-browser','test-ui','test-backend','typecheck','assets','assets-validate','check','package','release','ci','fixture','release-files','clean','clean-all')]
     [string]$Target = 'help',
     [ValidateSet('chrome','edge','chromium')]
-    [string]$Browser = 'chromium'
+    [string]$Browser = 'chromium',
+    [string]$Dist = 'dist',
+    [string]$Profile = '',
+    [string]$Url = '',
+    [string]$Binary = ''
 )
 $ErrorActionPreference = 'Stop'
 
+$definitions = [ordered]@{}
+foreach ($line in Get-Content -LiteralPath (Join-Path $PSScriptRoot 'Makefile')) {
+    if ($line -match '^([a-z][a-z-]*):[^#]*## (.+)$') { $definitions[$Matches[1]] = $Matches[2] }
+}
+if ($Target -notin $definitions.Keys) { throw "Unknown target $Target. Run .\make.ps1 help." }
 if ($Target -eq 'help') {
-    Write-Host 'Hanyu Pinyin Reader tasks'
-    Write-Host '  setup          Download portable Node.js if needed and install npm packages'
-    Write-Host '  build          Build the extension in dist (automatically sets up tools)'
-    Write-Host '  run            Build and open a dedicated browser profile'
-    Write-Host '  check          Run type checks, tests, and build validation'
-    Write-Host '  release        Validate and package a store release'
-    Write-Host '  doctor         Report the Node.js and npm versions'
-    Write-Host '  clean          Remove generated build and release files'
-    Write-Host '  clean-all      Also remove dependencies and test profiles'
-    Write-Host '  Other targets: install, dev, run-chrome, run-edge, run-chromium, test,'
-    Write-Host '    test-watch, test-browser, test-ui, test-backend, typecheck, assets,'
-    Write-Host '    assets-validate, package, ci, fixture, release-files'
-    Write-Host '  Example: .\make.ps1 build'
+    foreach ($task in $definitions.GetEnumerator()) { Write-Host ("  {0,-18} {1}" -f $task.Key, $task.Value) }
     exit 0
 }
+$makeCommand = if ($env:MAKE_BIN) { Get-Command $env:MAKE_BIN -CommandType Application -ErrorAction SilentlyContinue } else { Get-Command make.exe -CommandType Application -ErrorAction SilentlyContinue }
+if (-not $makeCommand) { throw 'Install GNU Make 4.3 or newer and add it to PATH, or set MAKE_BIN to its executable.' }
+$env:MAKE_BIN = $makeCommand.Source
 
 # The portable archive includes npm. It stays in this repository and does not
 # change the machine-wide PATH or require administrator rights.
@@ -104,14 +103,11 @@ $env:PATH = "$nodeDir;$env:PATH"
 
 Push-Location $PSScriptRoot
 try {
-    # Build-related commands need npm packages even on the first invocation.
-    $needsPackages = $Target -notin @('doctor','setup','install','ci','clean','clean-all','release-files','fixture')
-    if ($needsPackages -and -not (Test-Path 'node_modules/.bin/esbuild.cmd')) {
-        Write-Host 'Installing npm packages...'
-        & (Join-Path $nodeDir 'npm.cmd') install --no-package-lock
-        if ($LASTEXITCODE -ne 0) { throw "npm install failed with exit code $LASTEXITCODE" }
-    }
-    & $nodeExe scripts/tasks.mjs $Target --browser $Browser
+    $taskArgs = @($Target, '--browser', $Browser, '--dist', $Dist)
+    if ($Profile) { $taskArgs += @('--profile', $Profile) }
+    if ($Url) { $taskArgs += @('--url', $Url) }
+    if ($Binary) { $taskArgs += @('--binary', $Binary) }
+    & $nodeExe (Join-Path $PSScriptRoot 'make.mjs') @taskArgs
     $code = $LASTEXITCODE
 } finally {
     Pop-Location

@@ -2,7 +2,7 @@
 
 Chinese reading assistance for Chrome, Edge, and Chromium. The production source bundles pinyin-pro 3.29.4, modern phrase data, and Traditional Chinese mappings. Conversion does not send webpage text to a server.
 
-Version 1.1.0 replaces the earlier page-processing engine. See [the audit report](docs/AUDIT-1.1.0.md) for verified fixes, test results, and remaining limits. No release is claimed to work on every website.
+Version 1.1.1 fixes shadow-root restoration and page lifecycle races, rejects malformed settings imports, and consolidates developer commands. Version 1.1.0 replaced the earlier page-processing engine. See [the current review](docs/AUDIT-1.1.1.md) for fixes, validation, and remaining limits, and [the earlier audit](docs/AUDIT-1.1.0.md) for the engine redesign. No release is claimed to work on every website.
 
 ## Main features
 
@@ -13,69 +13,89 @@ Version 1.1.0 replaces the earlier page-processing engine. See [the audit report
 
 Declared Japanese and Korean content is excluded by default. Enable the advanced language option to process Han characters there. Names, rare characters, and ambiguous phrases can still receive imperfect pronunciations.
 
-## Build
+## Quick start
 
-For npm and Makefile commands, use Node.js 20 or newer and npm. The Windows PowerShell wrapper can set these up locally. Store artwork needs a CJK-capable system font, such as Noto CJK. No font files are bundled with this repository.
-
-```bash
-npm install
-npm run check
-npm run store:release
-```
-
-The repository pins direct dependency versions and commits `package-lock.json`, so transitive dependencies resolve reproducibly. The task runner and CI use npm ci when the lockfile is present and fall back to npm install otherwise.
-
-`npm run check` runs the real dependency-backed TypeScript and Vitest checks, builds the extension, validates its files, and runs compiled-worker tests with mocked browser APIs. Browser DOM and UI suites are separate commands.
-
-`npm run build` generates extension icons and writes the production extension to `dist`. Development mode watches TypeScript and static HTML, CSS, manifest, and icon files. Reload the unpacked extension after a rebuild.
+Use GNU Make 4.3 or newer, Node.js 20 or newer, and npm. The root `Makefile` owns the build recipes and dependency graph. Run commands from the repository root. Check the installed Make version with `make --version`. On Windows, install GNU Make and add it to PATH, or set `MAKE_BIN` to its executable before using the PowerShell launcher.
 
 ```bash
-npm run dev
-npm run test:backend
-npm run test:browser
-npm run test:ui
-```
-
-For the Python browser suites, install Playwright and its Chromium browser first. A system Chromium executable can instead be selected with CHROMIUM_BIN.
-
-```bash
-python -m pip install playwright
-python -m playwright install chromium
-```
-
-These suites exercise the DOM and UI with mocked Chrome APIs. They do not replace testing an installed extension, actual browser permissions, keyboard commands, cross-origin frames, or a screen reader.
-
-## Make and PowerShell
-
-The Makefile uses an installed Node.js 20+ and npm. On Windows, `make.ps1` works without a preinstalled Node.js: it downloads a SHA-256-verified portable Node.js archive into the ignored `.tools` folder when needed. Build-related tasks install npm packages automatically on first use. An internet connection is needed for the first download and npm install; later runs reuse the local tools. No administrator rights or machine-wide PATH changes are needed. The default `make.ps1` help works offline.
-
-```bash
-make help
 make setup
-make dev
-make run
-make run BROWSER=edge
-make run BROWSER=chromium URL=http://127.0.0.1:8765/fixtures/sample.html
-make run BROWSER=chromium PROFILE=.browser-profile/review DIST=.test-build BINARY=/usr/bin/chromium
-make test
-make test-browser
-make test-ui
 make check
-make release
-make fixture
-make clean
+make run BROWSER=chromium
 ```
+
+On Windows, the PowerShell wrapper can download a SHA-256-verified portable Node.js archive into `.tools` when a suitable installation is unavailable. GNU Make installs npm dependencies when the lockfile or package manifest changes, or when the installation marker is missing. Setup uses `npm ci` with the committed lockfile. Downloads require internet access. Help works offline without Node.js.
 
 ```powershell
+.\make.ps1 help
 .\make.ps1 setup
 .\make.ps1 run -Browser edge
-.\make.ps1 check
-.\make.ps1 release
 ```
 
-The default run target uses Chromium and a dedicated `.browser-profile` directory. Branded Chrome and Edge are opened at their extension management page for manual unpacked loading. Do not assume command-line sideload flags work in current branded browsers. The runner never uses the normal personal browser profile.
+The repository includes Noto Sans CJK SC for store artwork. A separate CJK system font is not required. The font is used by build tools and is not included in the extension ZIP.
 
-Additional tasks include doctor, install, build, build-validate, run-chrome, run-edge, run-chromium, test-watch, test-backend, typecheck, assets, store-generate, assets-validate, store-validate, package, store-release, ci, release-files, and clean-all. `package` skips unit tests. `clean-all` also removes dependencies and dedicated test profiles. Neither cleanup command removes source files. Browser launch variables are `BROWSER`, `DIST`, `PROFILE`, `URL`, and `BINARY`; `PROFILE`, `URL`, and `BINARY` apply to `run` targets.
+## Consolidated development commands
+
+`Makefile` contains explicit recipes for installation, compilation, testing, asset generation, validation, and packaging. It calls the underlying tools directly. `make.mjs`, `make.ps1`, and npm commands are thin launchers that invoke GNU Make. Help is read from comments beside the actual Make targets, with no separate task registry. Use `make help` for the complete list. `npm run make -- check` and `node make.mjs check` invoke the same Make graph.
+
+| Task | Purpose |
+| --- | --- |
+| `help`, `doctor` | List commands or report installed tools |
+| `setup`, `dependencies`, `install` | Verify tools, install changed dependencies, or force a locked reinstall |
+| `setup-browser` | Install Python Playwright and Chromium for browser tests |
+| `build`, `rebuild`, `dev`, `build-validate` | Build changed output, force a rebuild, watch source, or validate production output |
+| `run`, `run-chrome`, `run-edge`, `run-chromium` | Build and launch a dedicated browser profile |
+| `test`, `test-watch`, `typecheck` | Run unit tests, watch tests, or check TypeScript |
+| `test-tooling` | Check CLI failures, cleanup, and custom build launches |
+| `test-backend`, `test-ui` | Bring output up to date and test the worker or popup and options pages |
+| `test-browser` | Build the DOM harness and run browser regressions |
+| `check` | Run TypeScript, unit, tooling, production build, validation, and worker checks |
+| `test-all` | Run `check` plus the browser DOM and UI suites |
+| `icons`, `promo`, `screenshots` | Generate icons, promotional artwork, or screenshot illustrations separately |
+| `assets`, `store-generate` | Generate all store artwork |
+| `assets-validate`, `store-validate` | Validate generated store artwork |
+| `package` | Build, validate, and package without running tests |
+| `release`, `store-release` | Run `check`, then generate, validate, and package store materials |
+| `release-full` | Run `test-all`, then generate, validate, and package store materials |
+| `ci` | Install npm dependencies, then run `release` |
+| `fixture` | Serve the local compatibility page |
+| `release-files` | List generated release files |
+| `clean`, `clean-all` | Remove generated output, optionally dependencies and test profiles |
+
+Make tracks source, manifest, locale, icon, and dependency changes. An unchanged `make build` does no work. Grouped output rules rebuild the bundle once when an input changes or an expected output is missing. Production builds discard development source maps. `make rebuild` forces regeneration. Worker and UI tests depend on current build outputs. Shared prerequisites execute once per invocation. Release prerequisites run in order and stop on failure, including when `-j` is supplied. Release commands create local archives only. They do not publish to a browser store or GitHub.
+
+```bash
+make check
+make setup-browser
+make test-all
+make release-full
+make fixture
+```
+
+The fixture runs at `http://127.0.0.1:8080/sample.html`. Set `PORT` to change the port. In another terminal, launch the browser against it.
+
+```bash
+node make.mjs run --browser chromium --url http://127.0.0.1:8080/sample.html
+make run BROWSER=edge URL=http://127.0.0.1:8080/sample.html
+```
+
+Browser launch options are `--browser`, `--dist`, `--profile`, `--url`, and `--binary`. Make equivalents are `BROWSER`, `DIST`, `PROFILE`, `URL`, and `BINARY`. PowerShell equivalents are `-Browser`, `-Dist`, `-Profile`, `-Url`, and `-Binary`. For launch targets, a custom `DIST` selects an already built extension directory containing `manifest.json`. It does not change the build output location. Profiles must be beneath `.browser-profile`.
+
+The default browser is Chromium. Branded Chrome and Edge open their extension management page for manual unpacked loading. Development mode watches TypeScript and static UI files. Reload the unpacked extension after rebuilding.
+
+`clean` removes `dist`, `release`, `.test-build`, `coverage`, browser result JSON files, and UI test screenshots. `clean-all` also removes `node_modules` and `.browser-profile`. Both preserve source files, generated store artwork, and portable tools in `.tools`.
+
+## Browser test setup
+
+Install Python 3.9 or newer, then run the shared setup command.
+
+```bash
+node make.mjs setup-browser
+node make.mjs test-all
+```
+
+Setup creates `.tools/python` and installs the Playwright version pinned in `requirements-browser.txt`. Browser test commands detect that environment automatically. `PYTHON_BIN` selects an existing Python executable and setup installs into that environment instead. `CHROMIUM_BIN` selects an existing Chromium executable and skips the browser download. On Linux, Chromium may also require system libraries. Install the dependencies reported by Playwright if launch fails. CI installs them with `python -m playwright install --with-deps chromium`.
+
+The browser suites exercise real DOM rendering and compiled UI with mocked Chrome APIs. They do not replace installed-extension testing of permissions, keyboard commands, cross-origin frames, or screen readers. The Windows PowerShell bootstrap and GNU Make integration also need a native Windows smoke test.
 
 ## Install an unpacked build
 
@@ -90,7 +110,7 @@ The local compatibility fixture is served on the loopback interface by `make fix
 
 Each scan job retains a traversal cursor. A batch does not restart from the document head. A bounded count of visits, conversions, and elapsed work controls scheduling. Dictionary initialization or an individual browser/library operation can exceed the target time slice.
 
-The controller observes document and discovered open shadow roots. Extension mutations are isolated from observer delivery. A failed unchanged text node is not retried forever. Disable and settings changes cancel queued work before restoring text.
+The controller observes document and discovered open shadow roots. Extension mutations are isolated from observer delivery. A failed unchanged text node is not retried forever. Disable and settings changes cancel queued work before restoring text. Exclusion changes restore discovered nested shadow roots. Revealing a known shadow host queues its current content again. Delayed settings responses cannot restart a suspended or destroyed controller or replace a newer storage notification.
 
 Selection annotation splits eligible text nodes instead of deleting a range's markup. Removing Pinyin affects touched annotated words, not an entire paragraph. Partial selection of a word removes the guide for that whole word. Site links and formatting are preserved in the tested cases.
 
@@ -120,13 +140,13 @@ npm run store:release
 
 The command writes the following files under `release` after checks pass.
 
-- `hanyu-pinyin-reader-1.1.0-chrome-web-store.zip` with manifest.json at the archive root.
-- `hanyu-pinyin-reader-1.1.0-store-assets.zip` with listing materials and public-site templates.
+- `hanyu-pinyin-reader-1.1.1-chrome-web-store.zip` with manifest.json at the archive root.
+- `hanyu-pinyin-reader-1.1.1-store-assets.zip` with listing materials and public-site templates.
 - `SHA256SUMS.txt` with archive hashes.
 
 Packaging rejects previews, missing assets, invalid PNG icons, source maps, symlinks, unsafe paths, and obvious unsafe script patterns. This is a release sanity check, not a complete security proof. No fallback conversion database is silently substituted into a store release.
 
-The existing store graphics generator produces promotional illustrations, including representations of the older interface. Capture current real screenshots and review all listing claims before submitting version 1.1.0. Publish the privacy page at a public HTTPS URL and supply a real support contact. Store acceptance remains subject to the publisher's disclosures and review.
+The existing store graphics generator produces promotional illustrations, including representations of the older interface. Capture current real screenshots and review all listing claims before submitting version 1.1.1. Publish the privacy page at a public HTTPS URL and supply a real support contact. Store acceptance remains subject to the publisher's disclosures and review.
 
 ## Compatibility limits
 

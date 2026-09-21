@@ -10,6 +10,25 @@ permissions:
   contents: read
 
 jobs:
+  windows-tools:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install GNU Make
+        run: choco install make --yes --no-progress
+      - name: Check PowerShell task discovery and locked dependency setup
+        shell: pwsh
+        run: |
+          .\make.ps1 help
+          .\make.ps1 setup
+      - name: Validate through the PowerShell wrapper
+        shell: pwsh
+        run: .\make.ps1 check
+
   test-build:
     runs-on: ubuntu-latest
     steps:
@@ -28,12 +47,12 @@ jobs:
       - run: npm ci
 
       - name: Validate and package Chrome Web Store release
-        run: make release
+        run: node make.mjs release
 
       - uses: actions/upload-artifact@v4
         with:
           name: chrome-web-store-submission
-          path: release/*.zip
+          path: release/*
           if-no-files-found: error
 
   browser-suites:
@@ -54,17 +73,14 @@ jobs:
 
       - name: Install Playwright Chromium
         run: |
-          python -m pip install --upgrade playwright
+          python -m pip install -r requirements-browser.txt
           python -m playwright install --with-deps chromium
 
-      - name: Build extension for the UI suite
-        run: npm run build
-
       - name: Browser DOM regressions
-        run: npm run test:browser
+        run: node make.mjs test-browser
 
       - name: Popup and settings UI regressions
-        run: npm run test:ui
+        run: node make.mjs test-ui
 
       - uses: actions/upload-artifact@v4
         if: always()

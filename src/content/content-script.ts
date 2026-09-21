@@ -7,16 +7,29 @@ const world = globalThis as typeof globalThis & { __hanyuReader?: { destroy(): v
 world.__hanyuReader?.destroy();
 const controller = new PageController();
 const selection = new SelectionTool(controller);
-let alive = true, unsubscribe = () => {}, startupError = '';
-const ready = loadSettings().then(settings => {
+let alive = true, suspended = false, revision = 0, startupError = '';
+// Subscribe before loading so a late snapshot cannot overwrite newer changes.
+const unsubscribe = subscribeSettings(next => {
   if (!alive) return;
-  controller.apply(settings);
-  unsubscribe = subscribeSettings(next => { selection.hide(); controller.apply(next); });
-}).catch(() => { startupError = 'Settings could not be loaded. Reload the extension and page.'; });
+  revision++; startupError = '';
+  if (!suspended) { selection.hide(); controller.apply(next); }
+});
+async function reloadSettings(): Promise<void> {
+  const requestRevision = ++revision;
+  try {
+    const settings = await loadSettings();
+    if (!alive || suspended || requestRevision !== revision) return;
+    startupError = ''; controller.apply(settings);
+  } catch {
+    if (alive && !suspended && requestRevision === revision) startupError = 'Settings could not be loaded. Reload the extension and page.';
+  }
+}
+const ready = reloadSettings();
 const listener: Parameters<typeof chrome.runtime.onMessage.addListener>[0] = (message, sender, sendResponse) => {
   if (sender.id !== chrome.runtime.id) return;
   if (!['hp-status', 'hp-reprocess', 'hp-clear-cache', 'hp-selection-action'].includes(message?.type)) return;
   void ready.then(async () => {
+    if (!alive || suspended) throw new Error('The page is no longer active.');
     if (startupError) throw new Error(startupError);
     if (message.type === 'hp-reprocess') controller.rescan();
     if (message.type === 'hp-clear-cache') controller.clearCache();
@@ -26,11 +39,14 @@ const listener: Parameters<typeof chrome.runtime.onMessage.addListener>[0] = (me
   return true;
 };
 chrome.runtime.onMessage.addListener(listener);
-const hide = () => { selection.hide(); controller.stop(); };
-const show = (event: PageTransitionEvent) => { if (event.persisted) void loadSettings().then(settings => controller.apply(settings)).catch(() => undefined); };
+const hide = () => { suspended = true; revision++; selection.hide(); controller.stop(); };
+const show = (event: PageTransitionEvent) => {
+  if (alive && event.persisted) { suspended = false; void reloadSettings(); }
+};
 window.addEventListener('pagehide', hide);
 window.addEventListener('pageshow', show);
 world.__hanyuReader = { destroy() {
-  alive = false; unsubscribe(); selection.destroy(); controller.destroy();
+  if (!alive) return;
+  alive = false; revision++; unsubscribe(); selection.destroy(); controller.destroy();
   chrome.runtime.onMessage.removeListener(listener); window.removeEventListener('pagehide', hide); window.removeEventListener('pageshow', show);
 } };

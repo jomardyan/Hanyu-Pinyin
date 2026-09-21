@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.1.1
+
+- Restore annotations in nested open shadow roots when an ancestor becomes excluded, and rescan known roots after their hosts become visible again.
+- Ignore stale settings responses after page suspension, reinjection, or newer storage notifications.
+- Reject array-shaped settings imports instead of resetting preferences to defaults.
+- Add native GNU Make recipes and an incremental dependency graph, with thin Node and PowerShell launchers. Define browser setup, verification, release, and artwork commands directly in the Makefile.
+- Make standalone worker and UI tests depend on up-to-date build output. Honor custom prebuilt extension directories without rebuilding unrelated output.
+- Align PowerShell task coverage and browser arguments with the shared runner and use the npm lockfile during automatic setup.
+- Update README setup requirements, command reference, fixture URL, cleanup behavior, and test limits.
+
+
 ## Unreleased
 
 Fixed website rules being ignored in `about:blank` and `srcdoc` frames. Those frames inherit the parent origin but report an empty hostname, so an "Always enable" or "Never enable" rule never matched them even though the manifest opts into them. The content script now resolves the nearest ancestor origin.
