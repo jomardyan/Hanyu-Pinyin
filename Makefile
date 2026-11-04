@@ -24,7 +24,7 @@ BUILD_OUTPUTS := $(addprefix dist/,content.js background.js popup.js options.js 
 # Development source maps must never be reused as a production build.
 BUILD_FORCE := $(if $(wildcard dist/*.map),FORCE)
 
-.PHONY: help doctor setup install dependencies setup-browser build rebuild build-validate dev run run-chrome run-edge run-chromium test test-watch test-tooling test-backend test-browser test-ui typecheck check test-all icons promo screenshots assets store-generate assets-validate store-validate package release store-release release-full ci fixture release-files clean clean-all FORCE
+.PHONY: lint help doctor setup install dependencies setup-browser build rebuild build-validate dev run run-chrome run-edge run-chromium test test-watch test-tooling test-backend test-browser test-ui typecheck check test-all icons promo screenshots assets store-generate assets-validate store-validate package release store-release release-full ci fixture release-files clean clean-all FORCE
 
 help: ## Show commands defined in this Makefile
 	@"$(NODE)" scripts/make-help.mjs
@@ -81,6 +81,8 @@ run-edge: export HP_BROWSER = edge
 run-edge: run ## Launch Edge
 run-chromium: export HP_BROWSER = chromium
 run-chromium: run ## Launch Chromium
+
+lint: typecheck ## Check source and test types
 
 typecheck: dependencies ## Check TypeScript
 	"$(NODE)" node_modules/typescript/bin/tsc --noEmit
