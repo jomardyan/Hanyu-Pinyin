@@ -88,7 +88,8 @@ test('Make skips unchanged builds, rebuilds changed source, and repairs missing 
   };
   assert.equal(build(), 1);
   assert.equal(build(), 1);
-  await new Promise(resolve => setTimeout(resolve, 30));
+  // Some Windows Make builds compare file times at whole-second resolution.
+  await new Promise(resolve => setTimeout(resolve, process.platform === 'win32' ? 1100 : 30));
   put('src/content/main.ts', '// changed');
   assert.equal(build(), 2);
   assert.equal(build(), 2);
