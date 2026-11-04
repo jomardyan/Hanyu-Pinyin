@@ -49,7 +49,7 @@ jobs:
       - name: Validate and package Chrome Web Store release
         run: node make.mjs release
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: chrome-web-store-submission
           path: release/*
@@ -82,7 +82,7 @@ jobs:
       - name: Popup and settings UI regressions
         run: node make.mjs test-ui
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: browser-suite-results
