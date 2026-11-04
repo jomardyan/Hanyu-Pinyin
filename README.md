@@ -15,7 +15,7 @@ Declared Japanese and Korean content is excluded by default. Enable the advanced
 
 ## Quick start
 
-Use GNU Make 4.3 or newer, Node.js 20 or newer, and npm. The root `Makefile` owns the build recipes and dependency graph. Run commands from the repository root. Check the installed Make version with `make --version`. On Windows, install GNU Make and add it to PATH, or set `MAKE_BIN` to its executable before using the PowerShell launcher.
+Use GNU Make 4.3 or newer, Node.js 22.12 or newer (24 LTS recommended), and npm. The root `Makefile` owns the build recipes and dependency graph. Run commands from the repository root. Check the installed Make version with `make --version`. On Windows, install GNU Make and add it to PATH, or set `MAKE_BIN` to its executable before using the PowerShell launcher.
 
 ```bash
 make setup
@@ -151,3 +151,5 @@ The existing store graphics generator produces promotional illustrations, includ
 ## Compatibility limits
 
 Browser-protected pages, store pages, images, canvas text, closed Shadow DOM, and browser PDF viewers are not covered. An open shadow root attached to an existing host without an observable mutation may need Rescan. Cross-node phrase context is bounded and stops at block or link boundaries. Frameworks that retain and move the original text node can still conflict with DOM annotations. Test the sites you use and exclude incompatible regions.
+
+[Maintenance audit and validation notes](docs/AUDIT-2026-11-04.md) documents the reviewed scope, development commands, checks and remaining limits.
