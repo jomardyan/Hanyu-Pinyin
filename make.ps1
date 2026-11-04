@@ -18,7 +18,7 @@ if ($Target -eq 'help') {
     foreach ($task in $definitions.GetEnumerator()) { Write-Host ("  {0,-18} {1}" -f $task.Key, $task.Value) }
     exit 0
 }
-$makeCommand = if ($env:MAKE_BIN) { Get-Command $env:MAKE_BIN -CommandType Application -ErrorAction SilentlyContinue } else { Get-Command make.exe -CommandType Application -ErrorAction SilentlyContinue }
+$makeCommand = if ($env:MAKE_BIN) { Get-Command $env:MAKE_BIN -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1 } else { Get-Command make.exe -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1 }
 if (-not $makeCommand) { throw 'Install GNU Make 4.3 or newer and add it to PATH, or set MAKE_BIN to its executable.' }
 $env:MAKE_BIN = $makeCommand.Source
 
