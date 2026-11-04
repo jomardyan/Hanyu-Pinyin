@@ -155,3 +155,8 @@ Browser-protected pages, store pages, images, canvas text, closed Shadow DOM, an
 [Maintenance audit and validation notes](docs/AUDIT-2026-11-04.md) documents the reviewed scope, development commands, checks and remaining limits.
 
 `make lint` (also available as `node make.mjs lint`) runs the existing TypeScript checker through the shared Make target registry.
+
+## Copyright
+
+Copyright (c) 2026 Hayk Jomardyan - Lolisoft.
+See COPYRIGHT.md for attribution and existing license notices.
