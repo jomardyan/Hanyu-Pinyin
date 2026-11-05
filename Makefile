@@ -31,20 +31,20 @@ help: ## Show commands defined in this Makefile
 
 doctor: ## Check Node.js, npm, GNU Make, and optional Python tools
 	@"$(NODE)" -e "if(Number(process.versions.node.split('.')[0])<20)process.exit(1); console.log('Node.js',process.version)"
-	@$(NPM) --version
-	@$(MAKE) --version
+	@"$(NPM)" --version
+	@"$(MAKE)" --version
 	@"$(NODE)" scripts/python.mjs --doctor
 
 setup: doctor dependencies ## Verify tools and install locked dependencies
 
 install: ## Reinstall npm dependencies from the lockfile
-	$(NPM) ci --no-audit --no-fund
+	"$(NPM)" ci --no-audit --no-fund
 	@"$(NODE)" -e "require('node:fs').writeFileSync('$(INSTALL_STAMP)','installed')"
 
 dependencies: $(INSTALL_STAMP) ## Install npm dependencies when manifests change
 
 $(INSTALL_STAMP): package.json package-lock.json
-	$(NPM) ci --no-audit --no-fund
+	"$(NPM)" ci --no-audit --no-fund
 	@"$(NODE)" -e "require('node:fs').writeFileSync('$(INSTALL_STAMP)','installed')"
 
 setup-browser: ## Set up local Python Playwright and Chromium
@@ -62,7 +62,7 @@ build: $(BUILD_OUTPUTS) ## Build missing or changed production output
 
 rebuild: ## Force a fresh production build
 	"$(NODE)" scripts/clean.mjs --build-only
-	$(MAKE) build
+	"$(MAKE)" build
 
 build-validate: build ## Validate current production output
 	"$(NODE)" scripts/validate-build.mjs
@@ -144,7 +144,11 @@ release-files: ## List generated release files
 clean: ## Remove generated builds, packages, and test reports
 	"$(NODE)" scripts/clean.mjs
 
-clean-all: ## Also remove npm dependencies and browser profiles
+clean-all: ## Also remove npm dependencies; preserve browser profiles
 	"$(NODE)" scripts/clean.mjs --all
 
 FORCE:
+
+.PHONY: security
+security: ## Audit production npm dependencies without changing lockfiles
+	"$(NPM)" audit --omit=dev --audit-level=moderate
