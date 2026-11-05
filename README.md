@@ -59,7 +59,7 @@ The repository includes Noto Sans CJK SC for store artwork. A separate CJK syste
 | `ci` | Install npm dependencies, then run `release` |
 | `fixture` | Serve the local compatibility page |
 | `release-files` | List generated release files |
-| `clean`, `clean-all` | Remove generated output, optionally dependencies and test profiles |
+| `clean`, `clean-all` | Remove generated output, optionally dependencies; preserve browser profiles |
 
 Make tracks source, manifest, locale, icon, and dependency changes. An unchanged `make build` does no work. Grouped output rules rebuild the bundle once when an input changes or an expected output is missing. Production builds discard development source maps. `make rebuild` forces regeneration. Worker and UI tests depend on current build outputs. Shared prerequisites execute once per invocation. Release prerequisites run in order and stop on failure, including when `-j` is supplied. Release commands create local archives only. They do not publish to a browser store or GitHub.
 
@@ -82,7 +82,7 @@ Browser launch options are `--browser`, `--dist`, `--profile`, `--url`, and `--b
 
 The default browser is Chromium. Branded Chrome and Edge open their extension management page for manual unpacked loading. Development mode watches TypeScript and static UI files. Reload the unpacked extension after rebuilding.
 
-`clean` removes `dist`, `release`, `.test-build`, `coverage`, browser result JSON files, and UI test screenshots. `clean-all` also removes `node_modules` and `.browser-profile`. Both preserve source files, generated store artwork, and portable tools in `.tools`.
+`clean` removes `dist`, `release`, `.test-build`, `coverage`, browser result JSON files, and UI test screenshots. `clean-all` also removes `node_modules`. Both preserve browser profiles, source files, generated store artwork, and portable tools in `.tools`.
 
 ## Browser test setup
 

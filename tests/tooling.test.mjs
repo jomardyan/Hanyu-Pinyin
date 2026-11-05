@@ -42,7 +42,8 @@ test('cleanup removes generated output but preserves source and portable tools',
   writeFileSync(join(dir, 'browser-test-results.json'), '{}');
   const result = spawnSync(process.execPath, [join(dir, 'make.mjs'), 'clean-all'], { encoding: 'utf8', cwd: tmpdir() });
   assert.equal(result.status, 0, result.stderr);
-  for (const folder of ['dist', 'release', 'node_modules', '.browser-profile', 'browser-test-results.json']) assert.equal(existsSync(join(dir, folder)), false);
+  for (const folder of ['dist', 'release', 'node_modules', 'browser-test-results.json']) assert.equal(existsSync(join(dir, folder)), false);
+  assert.equal(readFileSync(join(dir, '.browser-profile/keep.txt'), 'utf8'), 'test');
   assert.equal(existsSync(join(dir, 'src/keep.txt')), true);
   assert.equal(existsSync(join(dir, '.tools/keep.txt')), true);
 });
